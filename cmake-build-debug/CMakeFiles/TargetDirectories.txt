@@ -1,0 +1,4 @@
+/SP-SLAM/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+/SP-SLAM/cmake-build-debug/CMakeFiles/ORB_SLAM2.dir
+/SP-SLAM/cmake-build-debug/CMakeFiles/edit_cache.dir
+/SP-SLAM/cmake-build-debug/CMakeFiles/SPSLAM.dir

@@ -23,6 +23,8 @@
 #include "ORBmatcher.h"
 #include <thread>
 #include <Timer.h>
+#include <boost/make_shared.hpp>
+
 namespace ORB_SLAM2
 {
 
@@ -919,6 +921,7 @@ void Frame::ComputePlanesFromPointCloud(const cv::Mat &imDepth) {
             if(!PlaneNotSeen(coef)){
                 continue;
             }
+//            extract.setIndices(pcl::PointIndicesConstPtr(inliers[i]));
             extract.setIndices(boost::make_shared<pcl::PointIndices>(inliers[i]));
             extract.filter(*planeCloud);
 

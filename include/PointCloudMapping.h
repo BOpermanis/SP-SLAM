@@ -60,7 +60,7 @@ class Map;
 
         PointCloud::Ptr mAllCloudPoints;
 
-        shared_ptr<thread> viewerThread;
+//        shared_ptr<thread> viewerThread;
 
         bool shutDownFlag = false;
         mutex shutDownMutex;

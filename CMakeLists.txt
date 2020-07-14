@@ -87,7 +87,7 @@ add_library(${PROJECT_NAME} SHARED
            g2oAddition/EdgeTwoVerPlanes.cc
            g2oAddition/EdgeTwoVerPlanes.h
            include/Timer.h
-           src/Timer.cc)
+           src/Timer.cc Examples/slam_zero_run.cpp)
 
 target_link_libraries(${PROJECT_NAME}
 ${OpenCV_LIBS}
@@ -106,3 +106,6 @@ add_executable(SPSLAM
         Examples/RGB-D/SPSLAM.cc)
 target_link_libraries(SPSLAM ${PROJECT_NAME})
 
+add_executable(slam_zero_run
+        Examples/slam_zero_run.cpp)
+target_link_libraries(slam_zero_run ${PROJECT_NAME})

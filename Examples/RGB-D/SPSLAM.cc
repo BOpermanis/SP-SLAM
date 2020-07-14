@@ -32,11 +32,20 @@
 #include <Timer.h>
 using namespace std;
 
-void LoadImages(const string &strAssociationFilename, vector<string> &vstrImageFilenamesRGB,
+void LoadImages(const string &strAssociationFilename, const string &strAssociationFilename2, vector<string> &vstrImageFilenamesRGB,
                 vector<string> &vstrImageFilenamesD, vector<double> &vTimestamps);
 
-int main(int argc, char **argv)
+int main()
 {
+    int argc = 5;
+    string argv[6];
+    argv[0] = "";
+    argv[1] = "/ORBvoc.txt";
+    argv[2] = "/SP-SLAM/Examples/RGB-D/TUM1.yaml";
+    argv[3] = "/home/slam_data/data_sets/rgbd_dataset_freiburg1_xyz";
+    argv[4] = "/home/slam_data/data_sets/rgbd_dataset_freiburg1_xyz/rgb.txt";
+    argv[5] = "/home/slam_data/data_sets/rgbd_dataset_freiburg1_xyz/depth.txt";
+
     if(argc != 5)
     {
         cerr << endl << "Usage: ./rgbd_tum path_to_vocabulary path_to_settings path_to_sequence path_to_association" << endl;
@@ -48,8 +57,8 @@ int main(int argc, char **argv)
     vector<string> vstrImageFilenamesD;
     vector<double> vTimestamps;
     string strAssociationFilename = string(argv[4]);
-    LoadImages(strAssociationFilename, vstrImageFilenamesRGB, vstrImageFilenamesD, vTimestamps);
-
+    LoadImages(string(argv[4]), string(argv[5]), vstrImageFilenamesRGB, vstrImageFilenamesD, vTimestamps);
+//    return 0;
     // Check consistency in the number of images and depthmaps
     int nImages = vstrImageFilenamesRGB.size();
     if(vstrImageFilenamesRGB.empty())
@@ -81,8 +90,12 @@ int main(int argc, char **argv)
     for(int ni=0; ni<nImages; ni++)
     {
         // Read image and depthmap from file
-        imRGB = cv::imread(string(argv[3])+"/"+vstrImageFilenamesRGB[ni],CV_LOAD_IMAGE_UNCHANGED);
-        imD = cv::imread(string(argv[3])+"/"+vstrImageFilenamesD[ni],CV_LOAD_IMAGE_UNCHANGED);
+        string path1 = string(argv[3])+"/"+vstrImageFilenamesRGB[ni];
+        string path2 = string(argv[3])+"/"+vstrImageFilenamesD[ni];
+        cout << "path1 " << path1 << endl;
+        cout << "path2 " << path2 << endl;
+        imRGB = cv::imread(path1,CV_LOAD_IMAGE_UNCHANGED);
+        imD = cv::imread(path2,CV_LOAD_IMAGE_UNCHANGED);
         double tframe = vTimestamps[ni];
 
         if(imRGB.empty())
@@ -176,15 +189,22 @@ int main(int argc, char **argv)
     return 0;
 }
 
-void LoadImages(const string &strAssociationFilename, vector<string> &vstrImageFilenamesRGB,
+void LoadImages(const string &strAssociationFilename, const string &strAssociationFilename2, vector<string> &vstrImageFilenamesRGB,
                 vector<string> &vstrImageFilenamesD, vector<double> &vTimestamps)
 {
     ifstream fAssociation;
+    ifstream fAssociation2;
     fAssociation.open(strAssociationFilename.c_str());
+    fAssociation2.open(strAssociationFilename2.c_str());
+
     while(!fAssociation.eof())
     {
         string s;
         getline(fAssociation,s);
+
+        string s2;
+        getline(fAssociation2,s2);
+
         if(!s.empty())
         {
             stringstream ss;
@@ -192,13 +212,20 @@ void LoadImages(const string &strAssociationFilename, vector<string> &vstrImageF
             double t;
             string sRGB, sD;
             ss >> t;
-            vTimestamps.push_back(t);
             ss >> sRGB;
-            vstrImageFilenamesRGB.push_back(sRGB);
-            ss >> t;
-            ss >> sD;
-            vstrImageFilenamesD.push_back(sD);
 
+            stringstream ss2;
+            ss2 << s2;
+            double t2;
+            ss2 >> t2;
+            ss2 >> sD;
+
+            if (sRGB.length() > 0 and sD.length() > 0){
+                vstrImageFilenamesRGB.push_back(sRGB);
+                vstrImageFilenamesD.push_back(sD);
+                vTimestamps.push_back(t);
+            }
+//            cout << t << ' ' << t2 << " "<< sRGB << " " << sD << endl;
         }
     }
 }

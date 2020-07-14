@@ -26,7 +26,7 @@ namespace ORB_SLAM2 {
     PointCloudMapping::PointCloudMapping(Map *map): mpMap(map) {
 
         mAllCloudPoints = boost::make_shared<PointCloud>();
-        viewerThread = make_shared<thread>(bind(&PointCloudMapping::viewer, this));
+//        viewerThread = make_shared<thread>(bind(&PointCloudMapping::viewer, this));
     }
 
     void PointCloudMapping::shutdown() {
@@ -35,7 +35,7 @@ namespace ORB_SLAM2 {
             shutDownFlag = true;
             keyFrameUpdated.notify_one();
         }
-        viewerThread->join();
+//        viewerThread->join();
     }
 
     void PointCloudMapping::insertKeyFrame(KeyFrame *kf) {

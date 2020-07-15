@@ -86,6 +86,16 @@ add_library(${PROJECT_NAME} SHARED
            g2oAddition/EdgeTwoParPlanes.h
            g2oAddition/EdgeTwoVerPlanes.cc
            g2oAddition/EdgeTwoVerPlanes.h
+            CAPE/CAPE.cpp
+        CAPE/CAPE.h
+        CAPE/capewrap.cpp
+        CAPE/CylinderSeg.cpp
+        CAPE/CylinderSeg.h
+        CAPE/Histogram.cpp
+        CAPE/Histogram.h
+        CAPE/Params.h
+        CAPE/PlaneSeg.cpp
+        CAPE/PlaneSeg.h
            include/Timer.h
            src/Timer.cc Examples/slam_zero_run.cpp)
 
@@ -109,3 +119,12 @@ target_link_libraries(SPSLAM ${PROJECT_NAME})
 add_executable(slam_zero_run
         Examples/slam_zero_run.cpp)
 target_link_libraries(slam_zero_run ${PROJECT_NAME})
+
+add_executable(cape_offline
+        CAPE/run_cape_offline.cpp
+        CAPE/CAPE.cpp
+        CAPE/PlaneSeg.cpp
+        CAPE/CylinderSeg.cpp
+        CAPE/Histogram.cpp)
+
+target_link_libraries(cape_offline ${OpenCV_LIBS} ${Eigen_LIBRARIES})

@@ -39,7 +39,7 @@
 #include "System.h"
 #include "PointCloudMapping.h"
 #include "MapPlane.h"
-
+#include "CAPE/capewrap.h"
 #include <mutex>
 
 class PointCloudMapping;
@@ -178,6 +178,8 @@ protected:
     
     // System
     System* mpSystem;
+
+    capewrap cape;
     
     //Drawers
     Viewer* mpViewer;

@@ -37,12 +37,10 @@
 #include "Initializer.h"
 #include "MapDrawer.h"
 #include "System.h"
-#include "PointCloudMapping.h"
 #include "MapPlane.h"
 
 #include <mutex>
 
-class PointCloudMapping;
 namespace ORB_SLAM2
 {
 
@@ -120,7 +118,6 @@ public:
 
     void Reset();
 
-    shared_ptr<PointCloudMapping>  mpPointCloudMapping;
 protected:
 
     // Main tracking function. It is independent of the input sensor.

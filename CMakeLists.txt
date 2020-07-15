@@ -75,7 +75,7 @@ add_library(${PROJECT_NAME} SHARED
            src/Sim3Solver.cc
            src/Initializer.cc
            src/Viewer.cc
-           src/PointCloudMapping.cc
+#           src/PointCloudMapping.cc
            src/Config.cc
            src/MapPlane.cc
            g2oAddition/VertexPlane.cc

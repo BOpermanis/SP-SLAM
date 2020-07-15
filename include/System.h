@@ -35,9 +35,7 @@
 #include "KeyFrameDatabase.h"
 #include "ORBVocabulary.h"
 #include "Viewer.h"
-#include "PointCloudMapping.h"
 
-class PointCloudMapping;
 namespace ORB_SLAM2
 {
 

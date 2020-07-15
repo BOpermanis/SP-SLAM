@@ -133,8 +133,8 @@ void Viewer::Run()
             mpMapDrawer->DrawKeyFrames(menuShowKeyFrames,menuShowGraph);
         if(menuShowPoints)
             mpMapDrawer->DrawMapPoints();
-        if(menuShowPlanes)
-            mpMapDrawer->DrawMapPlanes(menuShowAssumedPlanes);
+//        if(menuShowPlanes)
+//            mpMapDrawer->DrawMapPlanes(menuShowAssumedPlanes);
 
         pangolin::FinishFrame();
 

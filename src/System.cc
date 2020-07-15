@@ -309,7 +309,7 @@ void System::Shutdown()
 {
     mpLocalMapper->RequestFinish();
     mpLoopCloser->RequestFinish();
-    mpTracker->mpPointCloudMapping->shutdown();
+//    mpTracker->mpPointCloudMapping->shutdown();
     if(mpViewer)
     {
         mpViewer->RequestFinish();

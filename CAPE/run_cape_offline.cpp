@@ -24,25 +24,6 @@ bool cylinder_detection= true;
 std::vector<cv::Vec3b> color_code;
 
 
-bool loadCalibParameters1(string filepath, cv:: Mat & intrinsics_rgb, cv::Mat & dist_coeffs_rgb, cv:: Mat & intrinsics_ir, cv::Mat & dist_coeffs_ir, cv::Mat & R, cv::Mat & T){
-
-    cv::FileStorage fs(filepath,cv::FileStorage::READ);
-    if (fs.isOpened()){
-        fs["RGB_intrinsic_params"]>>intrinsics_rgb;
-        fs["RGB_distortion_coefficients"]>>dist_coeffs_rgb;
-        fs["IR_intrinsic_params"]>>intrinsics_ir;
-        fs["IR_distortion_coefficients"]>>dist_coeffs_ir;
-        fs["Rotation"]>>R;
-        fs["Translation"]>>T;
-        fs.release();
-        return true;
-    }else{
-        cerr << "Calibration file missing" << endl;
-        cerr << "Please execute: cd / && git clone https://github.com/pedropro/CAPE.git" << endl;
-        return false;
-    }
-}
-
 
 std::map<string, float> loadCalibParameters(string filepath){
 

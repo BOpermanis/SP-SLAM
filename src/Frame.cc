@@ -21,6 +21,8 @@
 #include "Frame.h"
 #include "Converter.h"
 #include "ORBmatcher.h"
+//#include "CAPE/capewrap.h"
+
 #include <thread>
 #include <Timer.h>
 #include <boost/make_shared.hpp>
@@ -127,7 +129,7 @@ Frame::Frame(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeSt
 }
 
 //RGB-D
-Frame::Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const double &timeStamp, ORBextractor* extractor,ORBVocabulary* voc, cv::Mat &K, cv::Mat &distCoef, const float &bf, const float &thDepth)
+Frame::Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const double &timeStamp, ORBextractor* extractor,ORBVocabulary* voc, cv::Mat &K, cv::Mat &distCoef, const float &bf, const float &thDepth, capewrap* cape)
     :mpORBvocabulary(voc),mpORBextractorLeft(extractor),mpORBextractorRight(static_cast<ORBextractor*>(NULL)),
      mTimeStamp(timeStamp), mK(K.clone()),mDistCoef(distCoef.clone()), mbf(bf), mThDepth(thDepth), mbNewPlane(false)
 {
@@ -183,7 +185,7 @@ Frame::Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const double &timeSt
 //    ComputePlanesFromPointCloud(imDepth);
     std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
 
-    ComputePlanesFromOrganizedPointCloud(imDepth);
+    ComputePlanesFromOrganizedPointCloud(imDepth, cape);
     mnRealPlaneNum = mvPlanePoints.size();
     ORB_SLAM2::Timer::AddPlane(mnRealPlaneNum);
 
@@ -211,59 +213,6 @@ Frame::Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const double &timeSt
     mnNotSeenPlaneNum = mvNotSeenPlaneCoefficients.size();
     mvpNotSeenMapPlanes = vector<MapPlane*>(mnNotSeenPlaneNum,static_cast<MapPlane*>(nullptr));
     mvbNotSeenPlaneOutlier = vector<bool>(mnNotSeenPlaneNum,false);
-//    if(mvPlanePoints.size() > mnRealPlaneNum + 1) {
-//        boost::shared_ptr< pcl::visualization::PCLVisualizer > viewer(new pcl::visualization::PCLVisualizer("viewer"));
-//        viewer->setBackgroundColor(255, 255, 255);
-//
-//        for(int i = 0; i < mvPlanePoints.size(); ++i){
-//            PointCloud::Ptr tmp = mvPlanePoints[i].makeShared();
-//
-//            pcl::visualization::PointCloudColorHandlerRGBField<PointT> rgb(tmp);
-//            std::stringstream cloudname;
-//            cloudname << "cloud_" << i ;
-//            viewer->addPointCloud(tmp, rgb, cloudname.str());
-//        }
-//        while (1){
-//            viewer->spinOnce();
-//        }
-//    }
-
-//    if(mvPlanePoints.size() > mnRealPlaneNum + 1) {
-//        pcl::visualization::CloudViewer viewer("plane viewer");
-//        PointCloud::Ptr showingCloud(new PointCloud);
-//
-//        for(int i = 0; i < mvPlanePoints.size(); ++i){
-//            *showingCloud += mvPlanePoints[i];
-//        }
-//        viewer.showCloud(showingCloud);
-//        getchar();
-//    }
-
-//    if(mvNotSeenPlanePoints.size() > 0) {
-//        pcl::visualization::CloudViewer viewer("plane viewer");
-//
-//        PointCloud::Ptr showingCloud(new PointCloud);
-//
-//        for (int x = 0; x < mvPlanePoints.size(); ++x) {
-//            *showingCloud += mvPlanePoints[x];
-//        }
-//
-//        for (int i = 0; i < mvNotSeenPlanePoints.size(); ++i) {
-//            *showingCloud += mvNotSeenPlanePoints[i];
-//        }
-//
-//        for (int j = 0; j < mvBoundaryPoints.size(); ++j) {
-//            for (auto &p : mvBoundaryPoints[j].points) {
-//                p.r = 0;
-//                p.g = 255;
-//                p.b = 0;
-//            }
-//            *showingCloud += mvBoundaryPoints[j];
-//        }
-//
-//        viewer.showCloud(showingCloud);
-//        getchar();
-//    }
 }
 
 // monocular
@@ -778,82 +727,16 @@ cv::Mat Frame::UnprojectStereo(const int &i)
     else
         return cv::Mat();
 }
+    void Frame::ComputePlanesFromOrganizedPointCloud(const cv::Mat &imDepth, capewrap* cape) {
+        auto capeout = cape->process(imDepth);
 
-void Frame::ComputePlanesFromPointCloud(const cv::Mat &imDepth) {
-    PointCloud::Ptr inputCloud( new PointCloud() );
-    float max = Config::Get<float>("Plane.MaxDistance");
-    for ( int m=0; m<imDepth.rows; m+=3 )
-    {
-        for ( int n=0; n<imDepth.cols; n+=3 )
-        {
-            float d = imDepth.ptr<float>(m)[n];
-            if (d < 0.01 || d > max)
-                continue;
-            PointT p;
-            p.z = d;
-            p.x = ( n - cx) * p.z / fx;
-            p.y = ( m - cy) * p.z / fy;
-
-            inputCloud->points.push_back(p);
-        }
-    }
-    if(inputCloud->points.size() < 1000)
-        return;
-
-    float disTh = Config::Get<float>("Plane.DistanceThreshold");
-    pcl::SACSegmentation<PointT> seg;
-    seg.setOptimizeCoefficients(true);
-    seg.setModelType(pcl::SACMODEL_PLANE);
-    seg.setMaxIterations(1000);
-    seg.setDistanceThreshold(disTh);
-
-    pcl::VoxelGrid<PointT> sor;
-    sor.setInputCloud(inputCloud);
-    float leafSize = Config::Get<float>("Plane.LeafSize");
-    sor.setLeafSize(leafSize,leafSize,leafSize);
-    sor.filter(*inputCloud);
-
-    pcl::RadiusOutlierRemoval<PointT> outrem;
-    outrem.setInputCloud(inputCloud);
-    outrem.setRadiusSearch(0.5);
-    outrem.setMinNeighborsInRadius(20);
-    outrem.filter(*inputCloud);
-
-    pcl::ExtractIndices<PointT> extract;
-    int nr_points = (int) inputCloud->points.size();
-    pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients ());
-
-    PointCloud::Ptr planeCloud(new PointCloud());
-    pcl::PointIndices::Ptr inliers(new pcl::PointIndices());
-
-    int min_plane = Config::Get<int>("Plane.MinSize");
-
-    while(inputCloud->points.size() > 0.3*nr_points){
-        seg.setInputCloud(inputCloud);
-        seg.segment(*inliers,*coefficients);
-        if(inliers->indices.size() < min_plane)
-            break;
-        extract.setInputCloud(inputCloud);
-        extract.setIndices(inliers);
-        extract.setNegative(false);
-        extract.filter(*planeCloud);
-        mvPlanePoints.push_back(*planeCloud);
-
-        cv::Mat coef = (cv::Mat_<float>(4,1) << coefficients->values[0],
-                                                coefficients->values[1],
-                                                coefficients->values[2],
-                                                coefficients->values[3]);
-        mvPlaneCoefficients.push_back(coef);
-        extract.setNegative(true);
-        extract.filter(*planeCloud);
-        inputCloud.swap(planeCloud);
-    }
-
-}
-
-    void Frame::ComputePlanesFromOrganizedPointCloud(const cv::Mat &imDepth) {
-        PointCloud::Ptr inputCloud( new PointCloud() );
         int cloudDis = Config::Get<int>("Cloud.Dis");
+
+        int min_plane = Config::Get<int>("Plane.MinSize");
+        float AngTh = Config::Get<float>("Plane.AngleThreshold");
+        float DisTh = Config::Get<float>("Plane.DistanceThreshold");
+
+        PointCloud::Ptr inputCloud( new PointCloud() );
         for ( int m=0; m<imDepth.rows; m+=cloudDis )
         {
             for ( int n=0; n<imDepth.cols; n+=cloudDis )
@@ -884,11 +767,6 @@ void Frame::ComputePlanesFromPointCloud(const cv::Mat &imDepth) {
         //计算特征值
         ne.compute(*cloud_normals);
 
-
-        int min_plane = Config::Get<int>("Plane.MinSize");
-        float AngTh = Config::Get<float>("Plane.AngleThreshold");
-        float DisTh = Config::Get<float>("Plane.DistanceThreshold");
-
         vector<pcl::ModelCoefficients> coefficients;
         vector<pcl::PointIndices> inliers;
         pcl::PointCloud<pcl::Label>::Ptr labels ( new pcl::PointCloud<pcl::Label> );
@@ -908,7 +786,8 @@ void Frame::ComputePlanesFromPointCloud(const cv::Mat &imDepth) {
         extract.setInputCloud(inputCloud);
         extract.setNegative(false);
 
-//        srand(time(0));
+        // loop over planes
+
         for (int i = 0; i < inliers.size(); ++i) {
             PointCloud::Ptr planeCloud(new PointCloud());
             cv::Mat coef = (cv::Mat_<float>(4,1) << coefficients[i].values[0],
@@ -928,7 +807,9 @@ void Frame::ComputePlanesFromPointCloud(const cv::Mat &imDepth) {
             mvPlanePoints.push_back(*planeCloud);
 
             PointCloud::Ptr boundaryPoints(new PointCloud());
+
             boundaryPoints->points = regions[i].getContour();
+
             mvBoundaryPoints.push_back(*boundaryPoints);
             mvPlaneCoefficients.push_back(coef);
         }

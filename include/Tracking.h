@@ -179,7 +179,7 @@ protected:
     // System
     System* mpSystem;
 
-    capewrap cape;
+    capewrap* cape;
     
     //Drawers
     Viewer* mpViewer;

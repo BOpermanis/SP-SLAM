@@ -48,6 +48,7 @@ ${PROJECT_SOURCE_DIR}/include
 ${EIGEN3_INCLUDE_DIR}
 ${Pangolin_INCLUDE_DIRS}
         ${PCL_INCLUDE_DIRS}
+        "CAPE"
 #${G2O_INCLUDE_DIRS}
 )
 add_definitions( ${PCL_DEFINITIONS} )
@@ -109,7 +110,6 @@ ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
 )
 
 # Build examples
-
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples/RGB-D)
 
 add_executable(SPSLAM
@@ -120,11 +120,18 @@ add_executable(slam_zero_run
         Examples/slam_zero_run.cpp)
 target_link_libraries(slam_zero_run ${PROJECT_NAME})
 
-add_executable(cape_offline
-        CAPE/run_cape_offline.cpp
+add_executable(cape_offline CAPE/run_cape_offline.cpp
         CAPE/CAPE.cpp
         CAPE/PlaneSeg.cpp
         CAPE/CylinderSeg.cpp
         CAPE/Histogram.cpp)
 
 target_link_libraries(cape_offline ${OpenCV_LIBS} ${Eigen_LIBRARIES})
+
+add_executable(test_pcl_plane_extraction
+        CAPE/CAPE.cpp
+        CAPE/PlaneSeg.cpp
+        CAPE/CylinderSeg.cpp
+        CAPE/Histogram.cpp
+        CAPE/test_pcl_plane_extraction.cpp)
+target_link_libraries(test_pcl_plane_extraction ${PCL_LIBRARIES} ${OpenCV_LIBS} ${Eigen_LIBRARIES})

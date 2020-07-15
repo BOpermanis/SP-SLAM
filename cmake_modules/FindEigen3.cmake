@@ -15,19 +15,20 @@
 # Copyright (c) 2009 Benoit Jacob <jacob.benoit.1@gmail.com>
 # Redistribution and use is allowed according to the terms of the 2-clause BSD license.
 
-if(NOT Eigen3_FIND_VERSION)
-  if(NOT Eigen3_FIND_VERSION_MAJOR)
-    set(Eigen3_FIND_VERSION_MAJOR 2)
-  endif(NOT Eigen3_FIND_VERSION_MAJOR)
-  if(NOT Eigen3_FIND_VERSION_MINOR)
-    set(Eigen3_FIND_VERSION_MINOR 91)
-  endif(NOT Eigen3_FIND_VERSION_MINOR)
-  if(NOT Eigen3_FIND_VERSION_PATCH)
-    set(Eigen3_FIND_VERSION_PATCH 0)
-  endif(NOT Eigen3_FIND_VERSION_PATCH)
+#if(NOT Eigen3_FIND_VERSION)
+#  if(NOT Eigen3_FIND_VERSION_MAJOR)
+#    set(Eigen3_FIND_VERSION_MAJOR 2)
+#  endif(NOT Eigen3_FIND_VERSION_MAJOR)
+#  if(NOT Eigen3_FIND_VERSION_MINOR)
+#    set(Eigen3_FIND_VERSION_MINOR 91)
+#  endif(NOT Eigen3_FIND_VERSION_MINOR)
+#  if(NOT Eigen3_FIND_VERSION_PATCH)
+#    set(Eigen3_FIND_VERSION_PATCH 0)
+#  endif(NOT Eigen3_FIND_VERSION_PATCH)
 
-  set(Eigen3_FIND_VERSION "${Eigen3_FIND_VERSION_MAJOR}.${Eigen3_FIND_VERSION_MINOR}.${Eigen3_FIND_VERSION_PATCH}")
-endif(NOT Eigen3_FIND_VERSION)
+set(EIGEN3_INCLUDE_DIR /eigen-3.1.1)
+set(Eigen3_FIND_VERSION "${Eigen3_FIND_VERSION_MAJOR}.${Eigen3_FIND_VERSION_MINOR}.${Eigen3_FIND_VERSION_PATCH}")
+#endif(NOT Eigen3_FIND_VERSION)
 
 macro(_eigen3_check_version)
   file(READ "${EIGEN3_INCLUDE_DIR}/Eigen/src/Core/util/Macros.h" _eigen3_version_header)

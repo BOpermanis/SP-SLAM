@@ -21,7 +21,7 @@
 #include "Frame.h"
 #include "Converter.h"
 #include "ORBmatcher.h"
-//#include "CAPE/capewrap.h"
+#include "capewrap.cpp"
 
 #include <thread>
 #include <Timer.h>
@@ -727,93 +727,72 @@ cv::Mat Frame::UnprojectStereo(const int &i)
     else
         return cv::Mat();
 }
-    void Frame::ComputePlanesFromOrganizedPointCloud(const cv::Mat &imDepth, capewrap* cape) {
-        auto capeout = cape->process(imDepth);
 
-        int cloudDis = Config::Get<int>("Cloud.Dis");
-
-        int min_plane = Config::Get<int>("Plane.MinSize");
-        float AngTh = Config::Get<float>("Plane.AngleThreshold");
-        float DisTh = Config::Get<float>("Plane.DistanceThreshold");
-
-        PointCloud::Ptr inputCloud( new PointCloud() );
-        for ( int m=0; m<imDepth.rows; m+=cloudDis )
+    cv::Mat plane_mask(const cv::Mat &seg, uchar i_plane){
+        cv::Mat mask = cv::Mat::zeros(seg.rows, seg.cols, CV_8U);
+        for(int i=0; i<seg.rows; i++)
         {
-            for ( int n=0; n<imDepth.cols; n+=cloudDis )
+            for(int j=0; j<seg.cols; j++)
             {
-                float d = imDepth.ptr<float>(m)[n];
-                PointT p;
-                p.z = d;
-                p.x = ( n - cx) * p.z / fx;
-                p.y = ( m - cy) * p.z / fy;
-                p.r = 0;
-                p.g = 0;
-                p.b = 250;
-
-                inputCloud->points.push_back(p);
+                if (seg.at<uchar>(i,j) == i_plane){
+                    mask.at<uchar>(i,j) = 1;
+                }
             }
         }
-        inputCloud->height = ceil(imDepth.rows/float(cloudDis));
-        inputCloud->width = ceil(imDepth.cols/float(cloudDis));
+        return mask;
+    }
 
+    void Erosion( cv::Mat &src, cv::Mat &erosion_dst)
+    {
+        int erosion_size = 10;
+        cv::Mat element = getStructuringElement( cv::MORPH_RECT,
+                                                 cv::Size( 2*erosion_size + 1, 2*erosion_size+1 ), cv::Point( erosion_size, erosion_size ) );
+        cv::erode( src, erosion_dst, element );
+//    imshow( "Erosion Demo", erosion_dst );
+    }
 
-        //估计法线
-        pcl::IntegralImageNormalEstimation<PointT, pcl::Normal> ne;
-        pcl::PointCloud<pcl::Normal>::Ptr cloud_normals(new pcl::PointCloud<pcl::Normal>);
-        ne.setNormalEstimationMethod(ne.AVERAGE_3D_GRADIENT);
-        ne.setMaxDepthChangeFactor(0.05f);
-        ne.setNormalSmoothingSize(10.0f);
-        ne.setInputCloud(inputCloud);
-        //计算特征值
-        ne.compute(*cloud_normals);
+    void Dilate( cv::Mat &src, cv::Mat &dilation_dst)
+    {
+        int dilation_size = 10;
 
-        vector<pcl::ModelCoefficients> coefficients;
-        vector<pcl::PointIndices> inliers;
-        pcl::PointCloud<pcl::Label>::Ptr labels ( new pcl::PointCloud<pcl::Label> );
-        vector<pcl::PointIndices> label_indices;
-        vector<pcl::PointIndices> boundary;
+        cv::Mat element = getStructuringElement( cv::MORPH_RECT,
+                                                 cv::Size( 2*dilation_size + 1, 2*dilation_size+1 ),
+                                                 cv::Point( dilation_size, dilation_size ) );
+        cv::dilate( src, dilation_dst, element );
+    }
 
-        pcl::OrganizedMultiPlaneSegmentation< PointT, pcl::Normal, pcl::Label > mps;
-        mps.setMinInliers (min_plane);
-        mps.setAngularThreshold (0.017453 * AngTh);
-        mps.setDistanceThreshold (DisTh);
-        mps.setInputNormals (cloud_normals);
-        mps.setInputCloud (inputCloud);
-        std::vector<pcl::PlanarRegion<PointT>, Eigen::aligned_allocator<pcl::PlanarRegion<PointT>>> regions;
-        mps.segmentAndRefine (regions, coefficients, inliers, labels, label_indices, boundary);
+    void Frame::ComputePlanesFromOrganizedPointCloud(const cv::Mat &imDepth, capewrap* cape){
+        auto capeout = cape->process(imDepth);
+        for(uchar i_plane = 1; i_plane<=capeout.nr_planes; i_plane++){
+            auto mask = plane_mask(capeout.seg_output, i_plane);
 
-        pcl::ExtractIndices<PointT> extract;
-        extract.setInputCloud(inputCloud);
-        extract.setNegative(false);
+//            if(coef.at<float>(3) < 0)
+//                coef = -coef;
 
-        // loop over planes
+            Dilate(mask, mask);
+            Erosion(mask, mask);
+            vector<vector<cv::Point> > contours;
+            vector<cv::Point> contour0;
+            vector<cv::Point> border;
+            vector<cv::Vec4i> hierarchy;
+            cv::findContours(mask, contours, hierarchy, -1, 2);
 
-        for (int i = 0; i < inliers.size(); ++i) {
-            PointCloud::Ptr planeCloud(new PointCloud());
-            cv::Mat coef = (cv::Mat_<float>(4,1) << coefficients[i].values[0],
-                    coefficients[i].values[1],
-                    coefficients[i].values[2],
-                    coefficients[i].values[3]);
-            if(coef.at<float>(3) < 0)
-                coef = -coef;
-
-            if(!PlaneNotSeen(coef)){
-                continue;
+            int maxlen = 0;
+            for(auto &cnt: contours){
+                if (cnt.size() > maxlen){
+                    contour0 = cnt;
+                    maxlen = cnt.size();
+                }
             }
-//            extract.setIndices(pcl::PointIndicesConstPtr(inliers[i]));
-            extract.setIndices(boost::make_shared<pcl::PointIndices>(inliers[i]));
-            extract.filter(*planeCloud);
 
-            mvPlanePoints.push_back(*planeCloud);
+            double epsilon = 0.1*cv::arcLength(contour0,true);
+            cv::approxPolyDP(contour0, border, epsilon, false);
+//            boundaryPoints->points = regions[i].getContour();
+//
+//            mvBoundaryPoints.push_back(*boundaryPoints);
+//            mvPlaneCoefficients.push_back(coef);
 
-            PointCloud::Ptr boundaryPoints(new PointCloud());
-
-            boundaryPoints->points = regions[i].getContour();
-
-            mvBoundaryPoints.push_back(*boundaryPoints);
-            mvPlaneCoefficients.push_back(coef);
         }
-
     }
 
     void Frame::GeneratePlanesFromBoundries(const cv::Mat &imDepth) {

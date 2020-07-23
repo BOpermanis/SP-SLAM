@@ -225,6 +225,7 @@ public:
     std::vector<PointCloud> mvNotSeenPlanePoints;
 
     std::vector<PointCloud> mvBoundaryPoints;
+//    Frame::ComputePlanesFromOrganizedPointCloud(const cv::Mat &imDepth, capewrap* cape)
     std::vector<PointCloud> mvNotSeenBoundaryPoints;
 
     std::vector<cv::Mat> mvPlaneCoefficients;

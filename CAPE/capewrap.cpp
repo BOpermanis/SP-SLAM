@@ -117,7 +117,7 @@ public:
     bool done = false;
     float COS_ANGLE_MAX = cos(M_PI / 12);
     float MAX_MERGE_DIST = 50.0f;
-    bool cylinder_detection = true;
+    bool cylinder_detection = false;
 
     std::vector<cv::Vec3b> color_code;
 

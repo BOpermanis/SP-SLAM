@@ -30,11 +30,13 @@ LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake_modules)
 
 find_package(OpenCV 3.0 QUIET)
 if(NOT OpenCV_FOUND)
+#   message(FATAL_ERROR "OpenCV not found.")
    find_package(OpenCV 2.4.3 QUIET)
    if(NOT OpenCV_FOUND)
       message(FATAL_ERROR "OpenCV > 2.4.3 not found.")
    endif()
 endif()
+#set(OpenCV_LIBS /slamdoom/libs/opencv3)
 
 find_package(Eigen3 3.1.0 REQUIRED)
 find_package(Pangolin REQUIRED)
@@ -45,10 +47,10 @@ include_directories(
 ${PROJECT_SOURCE_DIR}
         ${PROJECT_SOURCE_DIR}/g2oAddition
 ${PROJECT_SOURCE_DIR}/include
-${EIGEN3_INCLUDE_DIR}
+        ${PROJECT_SOURCE_DIR}/CAPE
+        ${EIGEN3_INCLUDE_DIR}
 ${Pangolin_INCLUDE_DIRS}
         ${PCL_INCLUDE_DIRS}
-        "CAPE"
 #${G2O_INCLUDE_DIRS}
 )
 add_definitions( ${PCL_DEFINITIONS} )

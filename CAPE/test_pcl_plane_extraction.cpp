@@ -13,6 +13,7 @@
 #include <math.h>
 
 #include <opencv2/opencv.hpp>
+//#include <opencv2/imgproc.hpp>
 #include <Eigen/Dense>
 #include "CAPE/capewrap.cpp"
 #include <cstdlib>
@@ -29,13 +30,36 @@
 #include <pcl/filters/radius_outlier_removal.h>
 #include <pcl/segmentation/organized_multi_plane_segmentation.h>
 #include <pcl/features/integral_image_normal.h>
+#include <iostream>
+#include <fstream>
 
+using namespace std;
+
+void writeMatToFile(cv::Mat& m, const char* filename)
+{
+    ofstream fout(filename);
+    if(!fout)
+    {
+        cout<<"File Not Opened"<<endl;  return;
+    }
+    for(int i=0; i<m.rows; i++)
+    {
+        for(int j=0; j<m.cols; j++)
+        {
+            if (m.at<uchar>(i,j) == 0){
+                fout<<"0,";
+            } else {
+                fout<<"1,";
+            }
+        }
+        fout<<endl;
+    }
+    fout.close();
+}
 
 using namespace std;
 
 std::vector<cv::Vec3b> color_code;
-
-
 
 std::map<string, float> loadCalibParameters(string filepath){
 
@@ -139,7 +163,72 @@ void apply_pcl(const cv::Mat &imDepth, string filepath){
     pcl::ExtractIndices<PointT> extract;
     extract.setInputCloud(inputCloud);
     extract.setNegative(false);
+    for (auto coef: coefficients){
+        cout << "222 ";
+        for(auto a: coef.values){
+            cout << a << " ";
+        }
+        cout << endl;
+    }
+
+    for (int i = 0; i < inliers.size(); ++i) {
+        PointCloud::Ptr planeCloud(new PointCloud());
+        cv::Mat coef = (cv::Mat_<float>(4,1) << coefficients[i].values[0],
+                coefficients[i].values[1],
+                coefficients[i].values[2],
+                coefficients[i].values[3]);
+        if(coef.at<float>(3) < 0)
+            coef = -coef;
+
+//            extract.setIndices(pcl::PointIndicesConstPtr(inliers[i]));
+        extract.setIndices(boost::make_shared<pcl::PointIndices>(inliers[i]));
+        extract.filter(*planeCloud);
+
+
+        PointCloud::Ptr boundaryPoints(new PointCloud());
+        // boundaryPoints->points ir std::vector<PointT, Eigen::aligned_allocator<PointT> > points;
+        boundaryPoints->points = regions[i].getContour();
+//        for(auto &a: *boundaryPoints){
+//            cout << a << endl;
+//        }
+//        mvBoundaryPoints.push_back(*boundaryPoints);
+//        mvPlaneCoefficients.push_back(coef);
+    }
+
 }
+cv::Mat plane_mask(const cv::Mat &seg, uchar i_plane){
+    cv::Mat mask = cv::Mat::zeros(seg.rows, seg.cols, CV_8U);
+    for(int i=0; i<seg.rows; i++)
+    {
+        for(int j=0; j<seg.cols; j++)
+        {
+            if (seg.at<uchar>(i,j) == i_plane){
+                mask.at<uchar>(i,j) = 1;
+            }
+        }
+    }
+    return mask;
+}
+
+void Erosion( cv::Mat &src, cv::Mat &erosion_dst)
+{
+    int erosion_size = 10;
+    cv::Mat element = getStructuringElement( cv::MORPH_RECT,
+            cv::Size( 2*erosion_size + 1, 2*erosion_size+1 ), cv::Point( erosion_size, erosion_size ) );
+    cv::erode( src, erosion_dst, element );
+//    imshow( "Erosion Demo", erosion_dst );
+}
+
+void Dilate( cv::Mat &src, cv::Mat &dilation_dst)
+{
+    int dilation_size = 10;
+
+    cv::Mat element = getStructuringElement( cv::MORPH_RECT,
+                                         cv::Size( 2*dilation_size + 1, 2*dilation_size+1 ),
+                                         cv::Point( dilation_size, dilation_size ) );
+    cv::dilate( src, dilation_dst, element );
+}
+
 
 
 int main(int argc, char ** argv){
@@ -185,7 +274,7 @@ int main(int argc, char ** argv){
         return -1;
     }
 
-    cv::namedWindow("Seg");
+//    cv::namedWindow("Seg");
 
     // Populate with random color codes
     for(int i=0; i<100;i++){
@@ -236,50 +325,97 @@ int main(int argc, char ** argv){
 
         // Get intrinsics
         auto output = plane_detector.process(d_img);
+        for (const auto out: output.plane_params){
+            cout << "111 ";
+            for(auto n: out.normal){
+                cout << n << " ";
+            }
+            cout << " " << out.d << endl;
+        }
 
+//        cv::FileStorage file("/home/slam_data/data_sets/seg_output.csv", cv::FileStorage::WRITE);
+//        file << "mat" << output.seg_output;
+//        cv::Mat a = output.seg_output(cv::Rect(0, 0, 160, 480));
+
+
+
+        for(uchar i_plane = 1; i_plane<=output.nr_planes; i_plane++){
+            auto mask = plane_mask(output.seg_output, i_plane);
+//            writeMatToFile(mask, "/home/slam_data/data_sets/seg_output.csv");
+//            cv::Mat contour;
+
+//            if(coef.at<float>(3) < 0)
+//                coef = -coef;
+
+            Dilate(mask, mask);
+            Erosion(mask, mask);
+            vector<vector<cv::Point> > contours;
+            vector<cv::Point> contour0;
+            vector<cv::Point> border;
+            vector<cv::Vec4i> hierarchy;
+            cv::findContours(mask, contours, hierarchy, -1, 2);
+
+            int maxlen = 0;
+            for(auto &cnt: contours){
+                if (cnt.size() > maxlen){
+                    contour0 = cnt;
+                    maxlen = cnt.size();
+                }
+            }
+
+            cout << contours.size() << " " << contours[0].size() << endl;
+            cv::Scalar color( 255, 255, 255 );
+            cv::Scalar color1( 0, 127, 0 );
+
+            double epsilon = 0.1*cv::arcLength(contour0,true);
+//            approx = cv2.approxPolyDP(contour,epsilon,True)
+            cv::approxPolyDP(contour0, border, epsilon, false);
+            vector<vector<cv::Point> > contours111;
+            contours111.push_back(border);
+            cv::drawContours( mask, contours, 0, color, CV_FILLED, 8);
+            cv::drawContours( mask, contours111, 0, color1, 3, 8);
+
+            for (auto &pt: border){
+                float d = d_img.at<float>(pt.x, pt.y);
+                cout << "33 " << pt << " " << d_img.at<float>(pt.x, pt.y) << endl;
+            }
+
+
+
+
+//            PointCloud::Ptr boundaryPoints(new PointCloud());
+//
+//            std::vector<PointT, Eigen::aligned_allocator<PointT> > points;
+            std::vector<PointT, Eigen::aligned_allocator<PointT> > points;
+            for(auto &pt: border){
+
+                float y = (pt.y - plane_detector.cy_ir) / plane_detector.fy_ir;
+                float x = (pt.x - plane_detector.cx_ir) / plane_detector.fx_ir;
+
+//                a = coefs[:3]
+//                thetas = [coefs[3] / np.dot(a, b) for b in pixels1]
+//                pts = np.vstack([x * t for x, t in zip(pixels1, thetas)])
+                auto a = output.plane_params[i_plane].normal;
+                float theta = output.plane_params[i_plane].d / (x * a[0] + y * a[1] + a[2]);
+
+                PointT p;
+                p.z = theta;
+                p.x = x * theta;
+                p.y = y * theta;
+
+                p.r = 0;
+                p.g = 0;
+                p.b = 250;
+                Eigen::aligned_allocator<PointT>(p)
+            }
+//            boundaryPoints->points = regions[i].getContour();
+
+            cv::imshow("test", mask);
+            cv::waitKey(0);
+        }
         apply_pcl(d_img, calib_path.str());
 
-        // Map segments with color codes and overlap segmented image w/ RGB
-        uchar * sCode;
-        uchar * dColor;
-        uchar * srgb;
-        int code;
-        for(int r=0; r<  height; r++){
-            dColor = seg_rz.ptr<uchar>(r);
-            sCode = seg_output.ptr<uchar>(r);
-            srgb = rgb_img.ptr<uchar>(r);
-            for(int c=0; c< width; c++){
-                code = *sCode;
-                if (code>0){
-                    dColor[c*3] =   color_code[code-1][0]/2 + srgb[0]/2;
-                    dColor[c*3+1] = color_code[code-1][1]/2 + srgb[1]/2;
-                    dColor[c*3+2] = color_code[code-1][2]/2 + srgb[2]/2;;
-                }else{
-                    dColor[c*3] =  srgb[0];
-                    dColor[c*3+1] = srgb[1];
-                    dColor[c*3+2] = srgb[2];
-                }
-                sCode++; srgb++; srgb++; srgb++;
-            }
-        }
-
-        // Show frame rate and labels
-        cv::rectangle(seg_rz,  cv::Point(0,0),cv::Point(width,20), cv::Scalar(0,0,0),-1);
-        std::stringstream fps;
-        cv::putText(seg_rz, fps.str(), cv::Point(15,15), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255,255,255,1));
-
-        cout<<"Nr cylinders:"<<output.nr_cylinders<<endl;
         cout<<"Nr planes:"<<output.nr_planes<<endl;
-        int cylinder_code_offset = 50;
-        // show cylinder labels
-        if (output.nr_cylinders>0){
-            std::stringstream text;
-            text<<"Cylinders:";
-            cv::putText(seg_rz, text.str(), cv::Point(width/2,15), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255,255,255,1));
-            for(int j=0;j<output.nr_cylinders;j++){
-                cv::rectangle(seg_rz,  cv::Point(width/2 + 80+15*j,6),cv::Point(width/2 + 90+15*j,16), cv::Scalar(color_code[cylinder_code_offset+j][0],color_code[cylinder_code_offset+j][1],color_code[cylinder_code_offset+j][2]),-1);
-            }
-        }
 //        cv::imshow("Seg", seg_rz);
 //        cv::waitKey(1);
 //        sleep(10);

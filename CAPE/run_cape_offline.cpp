@@ -217,7 +217,7 @@ int main(int argc, char ** argv){
         int code;
         for(int r=0; r<  height; r++){
             dColor = seg_rz.ptr<uchar>(r);
-            sCode = seg_output.ptr<uchar>(r);
+            sCode = output.seg_output.ptr<uchar>(r);
             srgb = rgb_img.ptr<uchar>(r);
             for(int c=0; c< width; c++){
                 code = *sCode;
@@ -251,9 +251,10 @@ int main(int argc, char ** argv){
                 cv::rectangle(seg_rz,  cv::Point(width/2 + 80+15*j,6),cv::Point(width/2 + 90+15*j,16), cv::Scalar(color_code[cylinder_code_offset+j][0],color_code[cylinder_code_offset+j][1],color_code[cylinder_code_offset+j][2]),-1);
             }
         }
-//        cv::imshow("Seg", seg_rz);
-//        cv::waitKey(1);
-//        sleep(10);
+        cout << seg_rz.rows << " " << seg_rz.cols << endl;
+        cv::imshow("Seg", seg_rz);
+        cv::waitKey(1);
+        sleep(10);
         i++;
 
     }

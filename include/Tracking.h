@@ -39,7 +39,7 @@
 #include "System.h"
 #include "PointCloudMapping.h"
 #include "MapPlane.h"
-#include "CAPE/capewrap.h"
+#include "CAPE/capewrap.cpp"
 #include <mutex>
 
 class PointCloudMapping;

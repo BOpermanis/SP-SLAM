@@ -193,6 +193,7 @@ Frame::Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const double &timeSt
     double tt= std::chrono::duration_cast<std::chrono::duration<double> >(t2 - t1).count();
     ORB_SLAM2::Timer::SetTPlane(tt);
 
+    // generate supposed planes from boundaries ?
     GeneratePlanesFromBoundries(imDepth);
     std::chrono::steady_clock::time_point t3 = std::chrono::steady_clock::now();
     double tt2= std::chrono::duration_cast<std::chrono::duration<double> >(t3 - t2).count();
@@ -787,11 +788,38 @@ cv::Mat Frame::UnprojectStereo(const int &i)
 
             double epsilon = 0.1*cv::arcLength(contour0,true);
             cv::approxPolyDP(contour0, border, epsilon, false);
-//            boundaryPoints->points = regions[i].getContour();
-//
-//            mvBoundaryPoints.push_back(*boundaryPoints);
-//            mvPlaneCoefficients.push_back(coef);
 
+            cv::Mat coef = (cv::Mat_<float>(4,1) <<
+                                                 capeout.plane_params[i_plane].normal[0],
+                                                 capeout.plane_params[i_plane].normal[1],
+                                                 capeout.plane_params[i_plane].normal[2],
+                                                 capeout.plane_params[i_plane].d);
+
+            if(coef.at<float>(3) < 0)
+                coef = -coef;
+
+            std::vector<PointT, Eigen::aligned_allocator<PointT> > points;
+            for(auto &pt: border){
+
+                float y = (pt.y - cape->cy_ir) / cape->fy_ir;
+                float x = (pt.x - cape->cx_ir) / cape->fx_ir;
+
+                float theta = coef.at<float>(3) / (x * coef.at<float>(0) + y * coef.at<float>(1) + coef.at<float>(2));
+
+                PointT p;
+                p.z = theta;
+                p.x = x * theta;
+                p.y = y * theta;
+
+                p.r = 0;
+                p.g = 0;
+                p.b = 250;
+                points.push_back(p);
+            }
+            PointCloud::Ptr boundaryPoints(new PointCloud());
+            boundaryPoints->points = points;
+            mvBoundaryPoints.push_back(*boundaryPoints);
+            mvPlaneCoefficients.push_back(coef);
         }
     }
 

@@ -31,7 +31,7 @@
 #include "ORBextractor.h"
 #include "Config.h"
 #include "MapPlane.h"
-#include "CAPE/capewrap.h"
+#include "CAPE/capewrap.cpp"
 
 #include <opencv2/opencv.hpp>
 

@@ -29,7 +29,7 @@
 #include"Converter.h"
 #include"Map.h"
 #include"Initializer.h"
-#include "CAPE/capewrap.h"
+#include "CAPE/capewrap.cpp"
 
 #include"Optimizer.h"
 #include"PnPsolver.h"
@@ -118,7 +118,7 @@ Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer,
     int fIniThFAST = fSettings["ORBextractor.iniThFAST"];
     int fMinThFAST = fSettings["ORBextractor.minThFAST"];
 
-    cape = new capewrape(fSettings);
+    cape = new capewrap(fSettings);
     mpORBextractorLeft = new ORBextractor(nFeatures,fScaleFactor,nLevels,fIniThFAST,fMinThFAST);
 
     if(sensor==System::STEREO)
@@ -233,7 +233,7 @@ cv::Mat Tracking::GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, const d
     if((fabs(mDepthMapFactor-1.0f)>1e-5) || mImDepth.type()!=CV_32F)
         mImDepth.convertTo(mImDepth,CV_32F,mDepthMapFactor);
 
-    mCurrentFrame = Frame(mImGray,mImDepth,timestamp,mpORBextractorLeft,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth, *cape);
+    mCurrentFrame = Frame(mImGray,mImDepth,timestamp,mpORBextractorLeft,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth, cape);
 
     std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
 

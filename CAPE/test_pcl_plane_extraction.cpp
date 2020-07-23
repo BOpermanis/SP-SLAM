@@ -386,17 +386,23 @@ int main(int argc, char ** argv){
 //            PointCloud::Ptr boundaryPoints(new PointCloud());
 //
 //            std::vector<PointT, Eigen::aligned_allocator<PointT> > points;
+
+            cv::Mat coef = (cv::Mat_<float>(4,1) <<
+                    output.plane_params[i_plane].normal[0],
+                    output.plane_params[i_plane].normal[1],
+                    output.plane_params[i_plane].normal[2],
+                    output.plane_params[i_plane].d);
+
+            if(coef.at<float>(3) < 0)
+                coef = -coef;
+
             std::vector<PointT, Eigen::aligned_allocator<PointT> > points;
             for(auto &pt: border){
 
                 float y = (pt.y - plane_detector.cy_ir) / plane_detector.fy_ir;
                 float x = (pt.x - plane_detector.cx_ir) / plane_detector.fx_ir;
 
-//                a = coefs[:3]
-//                thetas = [coefs[3] / np.dot(a, b) for b in pixels1]
-//                pts = np.vstack([x * t for x, t in zip(pixels1, thetas)])
-                auto a = output.plane_params[i_plane].normal;
-                float theta = output.plane_params[i_plane].d / (x * a[0] + y * a[1] + a[2]);
+                float theta = coef.at<float>(3) / (x * coef.at<float>(0) + y * coef.at<float>(1) + coef.at<float>(2));
 
                 PointT p;
                 p.z = theta;
@@ -406,9 +412,11 @@ int main(int argc, char ** argv){
                 p.r = 0;
                 p.g = 0;
                 p.b = 250;
-                Eigen::aligned_allocator<PointT>(p)
+                points.push_back(p);
             }
-//            boundaryPoints->points = regions[i].getContour();
+            PointCloud::Ptr boundaryPoints(new PointCloud());
+            boundaryPoints->points = points;
+
 
             cv::imshow("test", mask);
             cv::waitKey(0);

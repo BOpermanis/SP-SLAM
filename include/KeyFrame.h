@@ -50,8 +50,10 @@ class KeyFrameDatabase;
 class KeyFrame
 {
 public:
-    typedef pcl::PointXYZRGB PointT;
-    typedef pcl::PointCloud <PointT> PointCloud;
+//    typedef pcl::PointXYZRGB PointT;
+//    typedef pcl::PointCloud <PointT> PointCloud;
+    typedef cv::Vec3f PointT;
+    typedef std::vector<PointT> PointCloud;
     KeyFrame(Frame &F, Map* pMap, KeyFrameDatabase* pKFDB);
 
     // Pose functions

@@ -52,7 +52,7 @@ Frame::Frame(const Frame &frame)
      mfScaleFactor(frame.mfScaleFactor), mfLogScaleFactor(frame.mfLogScaleFactor),
      mvScaleFactors(frame.mvScaleFactors), mvInvScaleFactors(frame.mvInvScaleFactors),
      mvLevelSigma2(frame.mvLevelSigma2), mvInvLevelSigma2(frame.mvInvLevelSigma2),
-     mvPlanePoints(frame.mvPlanePoints), mvPlaneCoefficients(frame.mvPlaneCoefficients), mbNewPlane(frame.mbNewPlane),
+     mvPlaneCoefficients(frame.mvPlaneCoefficients), mbNewPlane(frame.mbNewPlane),
      mvpMapPlanes(frame.mvpMapPlanes), mnPlaneNum(frame.mnPlaneNum), mvbPlaneOutlier(frame.mvbPlaneOutlier),
      mvpParallelPlanes(frame.mvpParallelPlanes), mvpVerticalPlanes(frame.mvpVerticalPlanes), mvBoundaryPoints(frame.mvBoundaryPoints),
      mvNotSeenPlaneCoefficients(frame.mvNotSeenPlaneCoefficients), mvNotSeenBoundaryPoints(frame.mvNotSeenBoundaryPoints),
@@ -186,7 +186,8 @@ Frame::Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const double &timeSt
     std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
 
     ComputePlanesFromOrganizedPointCloud(imDepth, cape);
-    mnRealPlaneNum = mvPlanePoints.size();
+//    mnRealPlaneNum = mvPlanePoints.size();
+    mnRealPlaneNum = mvBoundaryPoints.size();
     ORB_SLAM2::Timer::AddPlane(mnRealPlaneNum);
 
     std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
@@ -199,7 +200,8 @@ Frame::Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const double &timeSt
     double tt2= std::chrono::duration_cast<std::chrono::duration<double> >(t3 - t2).count();
     ORB_SLAM2::Timer::SetTSPlane(tt2);
 
-    mnPlaneNum = mvPlanePoints.size();
+//    mnPlaneNum = mvPlanePoints.size();
+    mnPlaneNum = mvBoundaryPoints.size();
 
     ORB_SLAM2::Timer::AddSPlane(mnPlaneNum - mnRealPlaneNum);
 
@@ -811,19 +813,19 @@ cv::Mat Frame::UnprojectStereo(const int &i)
     }
 
     void Frame::GeneratePlanesFromBoundries(const cv::Mat &imDepth) {
-        pcl::SACSegmentation<PointT> segLine;
-        pcl::ExtractIndices<PointT> extract;
-        double lineRatio = Config::Get<double>("Line.Ratio");
-        float disTh = Config::Get<float>("Line.DistanceThreshold");
-        segLine.setOptimizeCoefficients(true);
-        segLine.setModelType(pcl::SACMODEL_LINE);
-        segLine.setMaxIterations(1000);
-        segLine.setDistanceThreshold(disTh);
-        PointCloud::Ptr boundPoints(new pcl::PointCloud<PointT>);
-        PointCloud::Ptr tempPoints(new pcl::PointCloud<PointT>);
-        PointCloud::Ptr linePoints(new pcl::PointCloud<PointT>);
-        pcl::PointIndices::Ptr lineins (new pcl::PointIndices ());
-        pcl::ModelCoefficients::Ptr coeffline (new pcl::ModelCoefficients ());
+//        pcl::SACSegmentation<PointT> segLine;
+//        pcl::ExtractIndices<PointT> extract;
+//        double lineRatio = Config::Get<double>("Line.Ratio");
+//        float disTh = Config::Get<float>("Line.DistanceThreshold");
+//        segLine.setOptimizeCoefficients(true);
+//        segLine.setModelType(pcl::SACMODEL_LINE);
+//        segLine.setMaxIterations(1000);
+//        segLine.setDistanceThreshold(disTh);
+//        PointCloud::Ptr boundPoints(new pcl::PointCloud<PointT>);
+//        PointCloud::Ptr tempPoints(new pcl::PointCloud<PointT>);
+//        PointCloud::Ptr linePoints(new pcl::PointCloud<PointT>);
+//        pcl::PointIndices::Ptr lineins (new pcl::PointIndices ());
+//        pcl::ModelCoefficients::Ptr coeffline (new pcl::ModelCoefficients ());
 
         int iend = mvBoundaryPoints.size() - 1;
         for(int i=iend; i >= 0; --i){
@@ -841,72 +843,46 @@ cv::Mat Frame::UnprojectStereo(const int &i)
                 if (k1 == boundSize) k1 = 0;
                 PointT pc = boundPoints[k];
                 PointT pc1 = boundPoints[k1];
-                if(LineInRange(pc) && LineInRange(pc1) && IsBorderLine(pc, pc1,imDepth)) {
-
-                }
-            }
-
-
-            for(int j=0; j < 4; j++) {
-                segLine.setInputCloud(boundPoints);
-                segLine.segment(*lineins, *coeffline);
-                if (lineins->indices.size() < lineRatio * boundSize){
-                    break;
-                }
-
-                extract.setInputCloud(boundPoints);
-                extract.setIndices(lineins);
-                extract.setNegative(false);
-                extract.filter(*linePoints);
-                cv::Mat pc = (cv::Mat_<float>(3,1) << coeffline->values[0], coeffline->values[1], coeffline->values[2]);
-
-                if(LineInRange(pc) && IsBorderLine(linePoints,imDepth)) {
-                    cv::Mat coef = (cv::Mat_<float>(6,1) << coeffline->values[0],
-                            coeffline->values[1],
-                            coeffline->values[2],
-                            coeffline->values[3],
-                            coeffline->values[4],
-                            coeffline->values[5]);
-                    if(CaculatePlanes(mvPlaneCoefficients[i], coef)){
-                        for(auto &p : linePoints->points){
-                            p.r = 255;
-                            p.g = 0;
-                            p.b = 0;
-                        }
-                        mvPlanePoints[mvPlanePoints.size()-1] += *linePoints;
-                        mvBoundaryPoints.push_back(*linePoints);
-                    }else {
+//                if(LineInRange(pc) && LineInRange(pc1) && IsBorderLine(pc, pc1,imDepth)) {
+                PointT norm = pc1 - pc;
+                norm = norm / sqrt(norm[0]*norm[0] + norm[1]*norm[1] + norm[2]*norm[2]);
+                cv::Mat coef = (cv::Mat_<float>(6,1) << pc[0], pc[1], pc[2], norm[0], norm[1], norm[2]);
+                if(LineInRange(pc) && LineInRange(pc1)) {
+                    if(CaculatePlanes(mvPlaneCoefficients[i], coef)) {
+//                        for (auto &p : linePoints->points) {
+//                            p.r = 255;
+//                            p.g = 0;
+//                            p.b = 0;
+//                        }
+//                        mvPlanePoints[mvPlanePoints.size() - 1] += *linePoints;
+                        mvBoundaryPoints.push_back(PointCloud{pc, pc1});
                     }
                 }
-                extract.setNegative(true);
-                extract.filter(*tempPoints);
-                boundPoints.swap(tempPoints);
             }
         }
 
 }
-    void Frame::GenerateBoundaryPoints(int i) {
-        for(int j=0;j<mvPlanePoints[i].points.size();j+=20){
-            const PointT &pPlane = mvPlanePoints[i].points[j];
-            PointT p;
-            p.z = pPlane.z;
-            p.x = pPlane.x;
-            p.y = pPlane.y;
-            mvBoundaryPoints[i].points.push_back(p);
-        }
+//    void Frame::GenerateBoundaryPoints(int i) {
+//        for(int j=0;j<mvPlanePoints[i].points.size();j+=20){
+//            const PointT &pPlane = mvPlanePoints[i].points[j];
+//            PointT p;
+//            p.z = pPlane.z;
+//            p.x = pPlane.x;
+//            p.y = pPlane.y;
+//            mvBoundaryPoints[i].points.push_back(p);
+//        }
+//    }
 
-}
-
-    bool Frame::IsBorderLine(PointT pc, PointT pc1, const cv::Mat &imDepth) {
-        if (IsBorderPoint(pc,imDepth)) return true;
-        if (IsBorderPoint(pc1,imDepth)) return true;
-        return false;
-    }
+//    bool Frame::IsBorderLine(PointT pc, PointT pc1, const cv::Mat &imDepth) {
+//        if (IsBorderPoint(pc,imDepth)) return true;
+//        if (IsBorderPoint(pc1,imDepth)) return true;
+//        return false;
+//    }
 
     bool Frame::IsBorderPoint(PointT Pc, const cv::Mat &imDepth) {
-        const float &PcX = Pc.at<float>(0);
-        const float &PcY = Pc.at<float>(1);
-        const float &PcZ = Pc.at<float>(2);
+        const float &PcX = Pc[0];
+        const float &PcY = Pc[1];
+        const float &PcZ = Pc[2];
         if(PcZ<0.0f)
             return false;
 
@@ -967,27 +943,28 @@ cv::Mat Frame::UnprojectStereo(const int &i)
         cv::Mat coef = (cv::Mat_<float>(4,1) << a/v, b/v, c/v, -d/v);
         if(coef.at<float>(3) < 0)
             coef = -coef;
+
         if(PlaneNotSeen(coef)){
 
             PointCloud cloud;
             PointT p;
 
-            for(float i = -0.25; i< 0.25;){
-                for(float j = -0.25; j < 0.25;){
-                    p.x = inputline.at<float>(0) + i * inputline.at<float>(3) + j * inputplane.at<float>(0);
-                    p.y = inputline.at<float>(1) + i * inputline.at<float>(4) + j * inputplane.at<float>(1);
-                    p.z = (coef.at<float>(0)*p.x + coef.at<float>(1)*p.y + coef.at<float>(3)) / (-coef.at<float>(2));
-                    p.r = 0;
-                    p.g = 255;
-                    p.b = 0;
-                    cloud.points.push_back(p);
-                    j = j + 0.01;
-                }
-                i = i + 0.01;
-            }
+//            for(float i = -0.25; i< 0.25;){
+//                for(float j = -0.25; j < 0.25;){
+//                    p.x = inputline.at<float>(0) + i * inputline.at<float>(3) + j * inputplane.at<float>(0);
+//                    p.y = inputline.at<float>(1) + i * inputline.at<float>(4) + j * inputplane.at<float>(1);
+//                    p.z = (coef.at<float>(0)*p.x + coef.at<float>(1)*p.y + coef.at<float>(3)) / (-coef.at<float>(2));
+//                    p.r = 0;
+//                    p.g = 255;
+//                    p.b = 0;
+//                    cloud.points.push_back(p);
+//                    j = j + 0.01;
+//                }
+//                i = i + 0.01;
+//            }
 
             mvPlaneCoefficients.push_back(coef);
-            mvPlanePoints.push_back(cloud);
+//            mvPlanePoints.push_back(cloud);
             return true;
         }
         return false;

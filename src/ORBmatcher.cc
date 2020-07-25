@@ -27,7 +27,9 @@
 
 #include "Thirdparty/DBoW2/DBoW2/FeatureVector.h"
 
+#if defined(__GNUC__) && (__GNUC___ > 5 || (__GNUC__ == 5 && __GNUC_MINOR__ >= 1))
 #include<stdint-gcc.h>
+#endif
 
 using namespace std;
 

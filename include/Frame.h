@@ -60,7 +60,7 @@ class Frame
 {
 
 public:
-    typedef cv2::Vec3f PointT;
+    typedef cv::Vec3f PointT;
     typedef std::vector<PointT> PointCloud;
     Frame();
     // Copy constructor.
@@ -124,12 +124,12 @@ public:
                         const cv::Mat& inputline);
     bool PlaneNotSeen(const cv::Mat& coef);
     bool LineInRange(PointT Pc);
-    bool IsBorderLine(PointT pc, PointT pc1, , const cv::Mat &imDepth);
+    bool IsBorderLine(PointT pc, PointT pc1, const cv::Mat &imDepth);
     bool IsBorderPoint(PointT pc, const cv::Mat &imDepth);
     cv::Mat ComputePlaneWorldCoeff(const int &idx);
     cv::Mat ComputeNotSeenPlaneWorldCoeff(const int &idx);
 
-    void GenerateBoundaryPoints(int i);
+//    void GenerateBoundaryPoints(int i);
 public:
     // Vocabulary used for relocalization.
     ORBVocabulary* mpORBvocabulary;
@@ -221,7 +221,7 @@ public:
     static bool mbInitialComputations;
 
     //For PointCloud
-    std::vector<PointCloud> mvPlanePoints;
+//    std::vector<PointCloud> mvPlanePoints;
     std::vector<PointCloud> mvNotSeenPlanePoints;
 
     std::vector<PointCloud> mvBoundaryPoints;

@@ -9,11 +9,33 @@
 #include <time.h>
 
 namespace ORB_SLAM2{
+
+    typedef cv::Vec3f PointT;
+    typedef std::vector<PointT> PointCloud;
+
+    void Transformation(const PointCloud &cloud_in, PointCloud &cloud_out, const cv::Mat4f &T){
+//        auto T = pRefKF->GetPose().inv();
+        cv::Mat vec1 = cv::Mat::ones(4, 1, CV_32F);
+        cv::Mat vec2 = cv::Mat::ones(4, 1, CV_32F);
+
+        for (auto &pt: cloud_in){
+            vec1.at<float>(0, 0) = pt[0];
+            vec1.at<float>(1, 0) = pt[1];
+            vec1.at<float>(2, 0) = pt[2];
+
+            vec2 = T.mul(vec1);
+            float v = vec2.at<float>(3, 0);
+            cloud_out.push_back(PointT(vec2.at<float>(0, 0) / v, vec2.at<float>(1, 0) / v, vec2.at<float>(2, 0) / v));
+        }
+    }
+
     long unsigned int MapPlane::nLastId = 0;
     mutex MapPlane::mGlobalMutex;
 
     MapPlane::MapPlane(const cv::Mat &Pos, ORB_SLAM2::KeyFrame *pRefKF, int idx, Map* pMap, bool s):
-    mnBALocalForKF(0), mvBoundaryPoints(new PointCloud()),mpMap(pMap), mbSeen(s), mpRefKF(pRefKF), mbBad(false) {
+    mnBALocalForKF(0),
+//    mvBoundaryPoints(new PointCloud()),
+    mpMap(pMap), mbSeen(s), mpRefKF(pRefKF), mbBad(false) {
         Pos.copyTo(mWorldPos);
         mnId = nLastId++;
         if(mnId == 1)
@@ -23,12 +45,14 @@ namespace ORB_SLAM2{
         mBlue = rand() % 255;
         mGreen = rand() % 255;
 
-        Eigen::Isometry3d T = ORB_SLAM2::Converter::toSE3Quat(pRefKF->GetPose());
+//        Eigen::Isometry3d T = ORB_SLAM2::Converter::toSE3Quat(pRefKF->GetPose());
+//        auto T1 = T.inverse().matrix();
+        auto T = pRefKF->GetPose().inv();
         if (s) {
-            pcl::transformPointCloud(pRefKF->mvBoundaryPoints[idx], *mvBoundaryPoints, T.inverse().matrix());
+            Transformation(pRefKF->mvBoundaryPoints[idx], mvBoundaryPoints, T);
             AddObservation(pRefKF, idx);
         } else {
-            pcl::transformPointCloud(pRefKF->mvNotSeenBoundaryPoints[idx], *mvBoundaryPoints, T.inverse().matrix());
+            Transformation(pRefKF->mvNotSeenBoundaryPoints[idx], mvBoundaryPoints, T);
             AddNotSeenObservation(pRefKF, idx);
         }
     }
@@ -142,8 +166,9 @@ namespace ORB_SLAM2{
     }
 
     void MapPlane::UpdateBoundary(const ORB_SLAM2::Frame &pF, int id) {
-        Eigen::Isometry3d T = ORB_SLAM2::Converter::toSE3Quat( pF.mTcw );
-        pcl::transformPointCloud( pF.mvBoundaryPoints[id], *mvBoundaryPoints, T.inverse().matrix());
+        Transformation(pF.mvBoundaryPoints[id], mvBoundaryPoints, pF.mTcw.inv());
+//        Eigen::Isometry3d T = ORB_SLAM2::Converter::toSE3Quat( pF.mTcw );
+//        pcl::transformPointCloud( pF.mvBoundaryPoints[id], *mvBoundaryPoints, T.inverse().matrix());
     }
 
     bool MapPlane::IsInKeyFrame(KeyFrame *pKF)

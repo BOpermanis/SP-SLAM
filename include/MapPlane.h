@@ -24,8 +24,10 @@ namespace ORB_SLAM2 {
     class Frame;
     class Map;
     class MapPlane {
-        typedef pcl::PointXYZRGB PointT;
-        typedef pcl::PointCloud <PointT> PointCloud;
+//        typedef pcl::PointXYZRGB PointT;
+//        typedef pcl::PointCloud <PointT> PointCloud;
+        typedef cv::Vec3f PointT;
+        typedef std::vector<PointT> PointCloud;
     public:
         MapPlane(const cv::Mat &Pos, KeyFrame* pRefKF, int idx, Map* pMap, bool s = true);
 
@@ -61,7 +63,7 @@ namespace ORB_SLAM2 {
         long unsigned int mnCorrectedReference; //used by loop closing
         long unsigned int mnLoopPointForKF; //used by loop closing
         long unsigned int mnBAGlobalForKF;
-        PointCloud::Ptr mvBoundaryPoints;
+        PointCloud mvBoundaryPoints;
         bool mbSeen;
         cv::Mat mPosGBA;
         //used for visualization

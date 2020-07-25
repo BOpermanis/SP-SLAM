@@ -45,8 +45,10 @@ class Frame;
 class Map
 {
 public:
-    typedef pcl::PointXYZRGB PointT;
-    typedef pcl::PointCloud <PointT> PointCloud;
+//    typedef pcl::PointXYZRGB PointT;
+//    typedef pcl::PointCloud <PointT> PointCloud;
+    typedef cv::Vec3f PointT;
+    typedef std::vector<PointT> PointCloud;
     Map(const string &strSettingPath);
 
     void AddKeyFrame(KeyFrame* pKF);
@@ -71,7 +73,7 @@ public:
                              vector<MapPlane*> &vpMatched,vector<MapPlane*> &vpMatchedPar,vector<MapPlane*> &vpMatchedVer,
                              bool out = false);
 
-    double PointDistanceFromPlane(const cv::Mat& plane, PointCloud::Ptr boundry, bool out = false);
+    double PointDistanceFromPlane(const cv::Mat& plane, const PointCloud &boundry, bool out = false);
 
     std::vector<KeyFrame*> GetAllKeyFrames();
     std::vector<MapPoint*> GetAllMapPoints();

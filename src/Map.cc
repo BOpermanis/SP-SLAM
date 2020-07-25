@@ -343,14 +343,14 @@ void Map::clear()
     }
 
 
-    double Map::PointDistanceFromPlane(const cv::Mat &plane, PointCloud::Ptr boundry, bool out) {
+    double Map::PointDistanceFromPlane(const cv::Mat &plane, const PointCloud &boundry, bool out) {
     double res = 100;
     if(out)
         cout << " compute dis: " << endl;
-    for(auto p : boundry->points){
-        double dis = abs(plane.at<float>(0, 0) * p.x +
-                   plane.at<float>(1, 0) * p.y +
-                   plane.at<float>(2, 0) * p.z +
+    for(auto &p : boundry){
+        double dis = abs(plane.at<float>(0, 0) * p[0] +
+                   plane.at<float>(1, 0) * p[1] +
+                   plane.at<float>(2, 0) * p[2] +
                    plane.at<float>(3, 0));
         if(dis < res)
             res = dis;

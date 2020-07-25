@@ -113,72 +113,72 @@ namespace ORB_SLAM2 {
 
     void PointCloudMapping::viewer() {
 
-        boost::shared_ptr< pcl::visualization::PCLVisualizer > viewer(new pcl::visualization::PCLVisualizer("Plane viewer"));
-        pcl::VoxelGrid<PointT>  voxel;
-        voxel.setLeafSize( 0.02, 0.02, 0.02);
-        viewer->setBackgroundColor(255, 255, 255);
-        mbshowsp = Config::Get<int>("Plane.ShowSPlane");
-        while(1) {
-
-
-            {
-                unique_lock<mutex> lck_shutdown(shutDownMutex);
-                if (shutDownFlag) {
-                    break;
-                }
-            }
-
-            const vector<long unsigned int> &vnRPs = mpMap->GetRemovedPlanes();
-
-            for(auto mn : vnRPs){
-                std::stringstream cloudname;
-                cloudname <<  mn;
-                viewer->removePointCloud(cloudname.str());
-                viewer->spinOnce();
-            }
-
-            const vector<MapPlane *> &vpMPs = mpMap->GetAllMapPlanes();
-            if (vpMPs.empty())
-                continue;
-
-            for (auto pMP : vpMPs) {
-                std::stringstream cloudname;
-                cloudname <<  pMP->mnId;
-
-                if(pMP->isBad()) {
-                    viewer->removePointCloud(cloudname.str());
-                    continue;
-                }
-
-                map<KeyFrame *, int> observations = pMP->GetObservations();
-                float ir = pMP->mRed;
-                float ig = pMP->mGreen;
-                float ib = pMP->mBlue;
-
-                PointCloud::Ptr planeCloudPoints(new PointCloud);
-
-                for (auto mit = observations.begin(), mend = observations.end(); mit != mend; mit++) {
-                    KeyFrame *frame = mit->first;
-                    int id = mit->second;
-                    if (!mbshowsp && id >= frame->mnRealPlaneNum) {
-                        continue;
-                    }
-                    Eigen::Isometry3d T = ORB_SLAM2::Converter::toSE3Quat(frame->GetPose());
-                    PointCloud::Ptr cloud(new PointCloud);
-                    pcl::transformPointCloud(frame->mvPlanePoints[id], *cloud, T.inverse().matrix());
-                    *planeCloudPoints += *cloud;
-                }
-                PointCloud::Ptr tmp(new PointCloud());
-                voxel.setInputCloud(planeCloudPoints);
-                voxel.filter(*tmp);
-
-                pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZRGB> single_color(tmp, ir, ig, ib);
-
-                viewer->removePointCloud(cloudname.str());
-                viewer->addPointCloud(tmp, single_color, cloudname.str());
-                viewer->spinOnce();
-            }
-        }
+//        boost::shared_ptr< pcl::visualization::PCLVisualizer > viewer(new pcl::visualization::PCLVisualizer("Plane viewer"));
+//        pcl::VoxelGrid<PointT>  voxel;
+//        voxel.setLeafSize( 0.02, 0.02, 0.02);
+//        viewer->setBackgroundColor(255, 255, 255);
+//        mbshowsp = Config::Get<int>("Plane.ShowSPlane");
+//        while(1) {
+//
+//
+//            {
+//                unique_lock<mutex> lck_shutdown(shutDownMutex);
+//                if (shutDownFlag) {
+//                    break;
+//                }
+//            }
+//
+//            const vector<long unsigned int> &vnRPs = mpMap->GetRemovedPlanes();
+//
+//            for(auto mn : vnRPs){
+//                std::stringstream cloudname;
+//                cloudname <<  mn;
+//                viewer->removePointCloud(cloudname.str());
+//                viewer->spinOnce();
+//            }
+//
+//            const vector<MapPlane *> &vpMPs = mpMap->GetAllMapPlanes();
+//            if (vpMPs.empty())
+//                continue;
+//
+//            for (auto pMP : vpMPs) {
+//                std::stringstream cloudname;
+//                cloudname <<  pMP->mnId;
+//
+//                if(pMP->isBad()) {
+//                    viewer->removePointCloud(cloudname.str());
+//                    continue;
+//                }
+//
+//                map<KeyFrame *, int> observations = pMP->GetObservations();
+//                float ir = pMP->mRed;
+//                float ig = pMP->mGreen;
+//                float ib = pMP->mBlue;
+//
+//                PointCloud::Ptr planeCloudPoints(new PointCloud);
+//
+//                for (auto mit = observations.begin(), mend = observations.end(); mit != mend; mit++) {
+//                    KeyFrame *frame = mit->first;
+//                    int id = mit->second;
+//                    if (!mbshowsp && id >= frame->mnRealPlaneNum) {
+//                        continue;
+//                    }
+//                    Eigen::Isometry3d T = ORB_SLAM2::Converter::toSE3Quat(frame->GetPose());
+//                    PointCloud::Ptr cloud(new PointCloud);
+//                    pcl::transformPointCloud(frame->mvPlanePoints[id], *cloud, T.inverse().matrix());
+//                    *planeCloudPoints += *cloud;
+//                }
+//                PointCloud::Ptr tmp(new PointCloud());
+//                voxel.setInputCloud(planeCloudPoints);
+//                voxel.filter(*tmp);
+//
+//                pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZRGB> single_color(tmp, ir, ig, ib);
+//
+//                viewer->removePointCloud(cloudname.str());
+//                viewer->addPointCloud(tmp, single_color, cloudname.str());
+//                viewer->spinOnce();
+//            }
+//        }
     }
 }
 

@@ -767,9 +767,6 @@ cv::Mat Frame::UnprojectStereo(const int &i)
         for(uchar i_plane = 1; i_plane<=capeout.nr_planes; i_plane++){
             auto mask = plane_mask(capeout.seg_output, i_plane);
 
-//            if(coef.at<float>(3) < 0)
-//                coef = -coef;
-
             Dilate(mask, mask);
             Erosion(mask, mask);
             vector<vector<cv::Point> > contours;
@@ -798,7 +795,7 @@ cv::Mat Frame::UnprojectStereo(const int &i)
             if(coef.at<float>(3) < 0)
                 coef = -coef;
 
-            std::vector<PointT, Eigen::aligned_allocator<PointT> > points;
+            PointCloud boundaryPoints;
             for(auto &pt: border){
 
                 float y = (pt.y - cape->cy_ir) / cape->fy_ir;
@@ -806,19 +803,9 @@ cv::Mat Frame::UnprojectStereo(const int &i)
 
                 float theta = coef.at<float>(3) / (x * coef.at<float>(0) + y * coef.at<float>(1) + coef.at<float>(2));
 
-                PointT p;
-                p.z = theta;
-                p.x = x * theta;
-                p.y = y * theta;
-
-                p.r = 0;
-                p.g = 0;
-                p.b = 250;
-                points.push_back(p);
+                boundaryPoints.push_back(PointT(x * theta, y * theta, theta));
             }
-            PointCloud::Ptr boundaryPoints(new PointCloud());
-            boundaryPoints->points = points;
-            mvBoundaryPoints.push_back(*boundaryPoints);
+            mvBoundaryPoints.push_back(boundaryPoints);
             mvPlaneCoefficients.push_back(coef);
         }
     }
@@ -840,13 +827,26 @@ cv::Mat Frame::UnprojectStereo(const int &i)
 
         int iend = mvBoundaryPoints.size() - 1;
         for(int i=iend; i >= 0; --i){
-            boundPoints->points = mvBoundaryPoints[i].points;
-            int boundSize = boundPoints->points.size();
-            if(boundSize < 50){
-                if(boundSize == 0)
-                    GenerateBoundaryPoints(i);
-                continue;
+//            boundPoints->points = mvBoundaryPoints[i].points;
+            PointCloud boundPoints = mvBoundaryPoints[i];
+            int boundSize = boundPoints.size();
+//            if(boundSize < 50){
+//                if(boundSize == 0)
+//                    GenerateBoundaryPoints(i);
+//                continue;
+//            }
+
+            for (int k=0; k<boundSize; k++){
+                int k1 = k + 1;
+                if (k1 == boundSize) k1 = 0;
+                PointT pc = boundPoints[k];
+                PointT pc1 = boundPoints[k1];
+                if(LineInRange(pc) && LineInRange(pc1) && IsBorderLine(pc, pc1,imDepth)) {
+
+                }
             }
+
+
             for(int j=0; j < 4; j++) {
                 segLine.setInputCloud(boundPoints);
                 segLine.segment(*lineins, *coeffline);
@@ -885,7 +885,6 @@ cv::Mat Frame::UnprojectStereo(const int &i)
         }
 
 }
-
     void Frame::GenerateBoundaryPoints(int i) {
         for(int j=0;j<mvPlanePoints[i].points.size();j+=20){
             const PointT &pPlane = mvPlanePoints[i].points[j];
@@ -898,20 +897,13 @@ cv::Mat Frame::UnprojectStereo(const int &i)
 
 }
 
-    bool Frame::IsBorderLine(const PointCloud::Ptr line, const cv::Mat &imDepth) {
-        int s = line->points.size();
-        int res = 0;
-        for(auto p:line->points){
-            cv::Mat pc = (cv::Mat_<float>(3,1) << p.x, p.y, p.z);
-            if(!IsBorderPoint(pc,imDepth))
-                res ++;
-            if(res > s/4)
-                return false;
-        }
-        return true;
-}
+    bool Frame::IsBorderLine(PointT pc, PointT pc1, const cv::Mat &imDepth) {
+        if (IsBorderPoint(pc,imDepth)) return true;
+        if (IsBorderPoint(pc1,imDepth)) return true;
+        return false;
+    }
 
-    bool Frame::IsBorderPoint(const cv::Mat &Pc, const cv::Mat &imDepth) {
+    bool Frame::IsBorderPoint(PointT Pc, const cv::Mat &imDepth) {
         const float &PcX = Pc.at<float>(0);
         const float &PcY = Pc.at<float>(1);
         const float &PcZ = Pc.at<float>(2);
@@ -943,10 +935,10 @@ cv::Mat Frame::UnprojectStereo(const int &i)
         return true;
 }
 
-    bool Frame::LineInRange(const cv::Mat &Pc) {
-        const float &PcX = Pc.at<float>(0);
-        const float &PcY = Pc.at<float>(1);
-        const float &PcZ = Pc.at<float>(2);
+    bool Frame::LineInRange(PointT Pc) {
+        const float &PcX = Pc[0];
+        const float &PcY = Pc[1];
+        const float &PcZ = Pc[2];
         if(PcZ<0.0f)
             return false;
 

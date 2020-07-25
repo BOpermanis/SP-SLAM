@@ -60,8 +60,8 @@ class Frame
 {
 
 public:
-    typedef pcl::PointXYZRGB PointT;
-    typedef pcl::PointCloud <PointT> PointCloud;
+    typedef cv2::Vec3f PointT;
+    typedef std::vector<PointT> PointCloud;
     Frame();
     // Copy constructor.
     Frame(const Frame &frame);
@@ -123,9 +123,9 @@ public:
     bool CaculatePlanes(const cv::Mat& inputplane,
                         const cv::Mat& inputline);
     bool PlaneNotSeen(const cv::Mat& coef);
-    bool LineInRange(const cv::Mat& Pc);
-    bool IsBorderLine(const PointCloud::Ptr line, const cv::Mat &imDepth);
-    bool IsBorderPoint(const cv::Mat &Pc, const cv::Mat &imDepth);
+    bool LineInRange(PointT Pc);
+    bool IsBorderLine(PointT pc, PointT pc1, , const cv::Mat &imDepth);
+    bool IsBorderPoint(PointT pc, const cv::Mat &imDepth);
     cv::Mat ComputePlaneWorldCoeff(const int &idx);
     cv::Mat ComputeNotSeenPlaneWorldCoeff(const int &idx);
 

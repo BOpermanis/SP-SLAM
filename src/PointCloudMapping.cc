@@ -25,7 +25,8 @@
 namespace ORB_SLAM2 {
     PointCloudMapping::PointCloudMapping(Map *map): mpMap(map) {
 
-        mAllCloudPoints = boost::make_shared<PointCloud>();
+//        mAllCloudPoints = std::make_shared<PointCloud>();
+//        mAllCloudPoints = std::make_shared<PointCloud>();
 //        viewerThread = make_shared<thread>(bind(&PointCloudMapping::viewer, this));
     }
 

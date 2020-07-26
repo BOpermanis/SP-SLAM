@@ -23,17 +23,17 @@
 #include "System.h"
 #include "KeyFrame.h"
 #include "Map.h"
-#include <pcl/common/transforms.h>
-#include <pcl/point_types.h>
-#include <pcl/sample_consensus/method_types.h>
-#include <pcl/sample_consensus/model_types.h>
-#include <pcl/segmentation/sac_segmentation.h>
-#include <pcl/filters/voxel_grid.h>
-#include <pcl/filters/passthrough.h>
-#include <pcl/filters/extract_indices.h>
+//#include <pcl/common/transforms.h>
+//#include <pcl/point_types.h>
+//#include <pcl/sample_consensus/method_types.h>
+//#include <pcl/sample_consensus/model_types.h>
+//#include <pcl/segmentation/sac_segmentation.h>
+//#include <pcl/filters/voxel_grid.h>
+//#include <pcl/filters/passthrough.h>
+//#include <pcl/filters/extract_indices.h>
 #include <condition_variable>
-#include <pcl/ModelCoefficients.h>
-#include <pcl/visualization/cloud_viewer.h>
+//#include <pcl/ModelCoefficients.h>
+//#include <pcl/visualization/cloud_viewer.h>
 
 
 namespace ORB_SLAM2 {
@@ -41,8 +41,11 @@ class KeyFrame;
 class Map;
     class PointCloudMapping {
     public:
-        typedef pcl::PointXYZRGB PointT;
-        typedef pcl::PointCloud<PointT> PointCloud;
+//        typedef pcl::PointXYZRGB PointT;
+//        typedef pcl::PointCloud<PointT> PointCloud;
+
+        typedef cv::Vec3f PointT;
+        typedef std::vector<PointT> PointCloud;
 
         PointCloudMapping(Map* map);
 
@@ -58,7 +61,7 @@ class Map;
 
         void AddKFPointCloud(KeyFrame *pKF);
 
-        PointCloud::Ptr mAllCloudPoints;
+        PointCloud mAllCloudPoints;
 
 //        shared_ptr<thread> viewerThread;
 

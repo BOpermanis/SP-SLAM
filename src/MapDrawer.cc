@@ -24,9 +24,9 @@
 #include "KeyFrame.h"
 #include <pangolin/pangolin.h>
 #include <mutex>
-#include <pcl/common/transforms.h>
-#include <pcl/point_types.h>
-#include <pcl/filters/voxel_grid.h>
+//#include <pcl/common/transforms.h>
+//#include <pcl/point_types.h>
+//#include <pcl/filters/voxel_grid.h>
 namespace ORB_SLAM2
 {
 //    typedef pcl::PointXYZRGB PointT;

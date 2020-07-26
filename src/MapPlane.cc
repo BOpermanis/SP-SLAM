@@ -14,16 +14,14 @@ namespace ORB_SLAM2{
     typedef std::vector<PointT> PointCloud;
 
     void Transformation(const PointCloud &cloud_in, PointCloud &cloud_out, const cv::Mat4f &T){
-//        auto T = pRefKF->GetPose().inv();
         cv::Mat vec1 = cv::Mat::ones(4, 1, CV_32F);
-        cv::Mat vec2 = cv::Mat::ones(4, 1, CV_32F);
+        cv::Mat vec2;
 
         for (auto &pt: cloud_in){
             vec1.at<float>(0, 0) = pt[0];
             vec1.at<float>(1, 0) = pt[1];
             vec1.at<float>(2, 0) = pt[2];
-
-            vec2 = T.mul(vec1);
+            vec2 = T * vec1;
             float v = vec2.at<float>(3, 0);
             cloud_out.push_back(PointT(vec2.at<float>(0, 0) / v, vec2.at<float>(1, 0) / v, vec2.at<float>(2, 0) / v));
         }

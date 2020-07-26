@@ -12,11 +12,11 @@
 
 #include <opencv2/core/core.hpp>
 #include <mutex>
-#include <pcl/common/transforms.h>
-#include <pcl/point_types.h>
-#include <pcl/sample_consensus/method_types.h>
-#include <pcl/sample_consensus/model_types.h>
-#include <pcl/ModelCoefficients.h>
+//#include <pcl/common/transforms.h>
+//#include <pcl/point_types.h>
+//#include <pcl/sample_consensus/method_types.h>
+//#include <pcl/sample_consensus/model_types.h>
+//#include <pcl/ModelCoefficients.h>
 
 
 namespace ORB_SLAM2 {

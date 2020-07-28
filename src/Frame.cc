@@ -767,48 +767,55 @@ cv::Mat Frame::UnprojectStereo(const int &i)
     void Frame::ComputePlanesFromOrganizedPointCloud(const cv::Mat &imDepth, capewrap* cape){
         auto capeout = cape->process(imDepth);
         for(uchar i_plane = 1; i_plane<=capeout.nr_planes; i_plane++){
-            auto mask = plane_mask(capeout.seg_output, i_plane);
 
-            Dilate(mask, mask);
-            Erosion(mask, mask);
-            vector<vector<cv::Point> > contours;
-            vector<cv::Point> contour0;
-            vector<cv::Point> border;
-            vector<cv::Vec4i> hierarchy;
-            cv::findContours(mask, contours, hierarchy, -1, 2);
+            cv::Mat coef = cv::Mat_<float>(4,1);
+            coef.at<float>(0) = capeout.plane_params[i_plane].normal[0];
+            coef.at<float>(1) = capeout.plane_params[i_plane].normal[1];
+            coef.at<float>(2) = capeout.plane_params[i_plane].normal[2];
+            coef.at<float>(3) = capeout.plane_params[i_plane].d;
+            float s = coef.at<float>(0) + coef.at<float>(1) + coef.at<float>(2) + coef.at<float>(3);
 
-            int maxlen = 0;
-            for(auto &cnt: contours){
-                if (cnt.size() > maxlen){
-                    contour0 = cnt;
-                    maxlen = cnt.size();
+            if (s > 0){
+
+                auto mask = plane_mask(capeout.seg_output, i_plane);
+                Dilate(mask, mask);
+                Erosion(mask, mask);
+                vector<vector<cv::Point> > contours;
+                vector<cv::Point> contour0;
+                vector<cv::Point> border;
+                vector<cv::Vec4i> hierarchy;
+                cv::findContours(mask, contours, hierarchy, -1, 2);
+
+                int maxlen = 0;
+                for(auto &cnt: contours){
+                    if (cnt.size() > maxlen){
+                        contour0 = cnt;
+                        maxlen = cnt.size();
+                    }
+                }
+                double rel_area = cv::contourArea(contour0) / (imDepth.cols * imDepth.rows);
+                if (rel_area > 0.1){
+                    double epsilon = 0.1*cv::arcLength(contour0,true);
+                    cv::approxPolyDP(contour0, border, epsilon, false);
+
+                    if(coef.at<float>(3) < 0) {
+                        coef = -coef;
+                    }
+
+                    PointCloud boundaryPoints;
+                    for(auto &pt: border){
+
+                        float y = (pt.y - cape->cy_ir) / cape->fy_ir;
+                        float x = (pt.x - cape->cx_ir) / cape->fx_ir;
+
+                        float theta = coef.at<float>(3) / (x * coef.at<float>(0) + y * coef.at<float>(1) + coef.at<float>(2));
+
+                        boundaryPoints.push_back(PointT(x * theta, y * theta, theta));
+                    }
+                    mvBoundaryPoints.push_back(boundaryPoints);
+                    mvPlaneCoefficients.push_back(coef);
                 }
             }
-
-            double epsilon = 0.1*cv::arcLength(contour0,true);
-            cv::approxPolyDP(contour0, border, epsilon, false);
-
-            cv::Mat coef = (cv::Mat_<float>(4,1) <<
-                                                 capeout.plane_params[i_plane].normal[0],
-                                                 capeout.plane_params[i_plane].normal[1],
-                                                 capeout.plane_params[i_plane].normal[2],
-                                                 capeout.plane_params[i_plane].d);
-
-            if(coef.at<float>(3) < 0)
-                coef = -coef;
-
-            PointCloud boundaryPoints;
-            for(auto &pt: border){
-
-                float y = (pt.y - cape->cy_ir) / cape->fy_ir;
-                float x = (pt.x - cape->cx_ir) / cape->fx_ir;
-
-                float theta = coef.at<float>(3) / (x * coef.at<float>(0) + y * coef.at<float>(1) + coef.at<float>(2));
-
-                boundaryPoints.push_back(PointT(x * theta, y * theta, theta));
-            }
-            mvBoundaryPoints.push_back(boundaryPoints);
-            mvPlaneCoefficients.push_back(coef);
         }
     }
 

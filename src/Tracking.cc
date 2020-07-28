@@ -214,6 +214,12 @@ cv::Mat Tracking::GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, const d
     mImGray = imRGB;
     mImDepth = imD;
 
+//    float s = 0;
+//    for (auto &plane: mpMap->GetAllMapPlanes()){
+//        s += plane->GetWorldPos().at<float>(0, 0);
+//    }
+//    cout << "1111 s " << s << endl;
+
     if(mImGray.channels()==3)
     {
         if(mbRGB)

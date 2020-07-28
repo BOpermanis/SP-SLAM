@@ -92,8 +92,8 @@ int main()
         // Read image and depthmap from file
         string path1 = string(argv[3])+"/"+vstrImageFilenamesRGB[ni];
         string path2 = string(argv[3])+"/"+vstrImageFilenamesD[ni];
-        cout << "path1 " << path1 << endl;
-        cout << "path2 " << path2 << endl;
+//        cout << "path1 " << path1 << endl;
+//        cout << "path2 " << path2 << endl;
         imRGB = cv::imread(path1,CV_LOAD_IMAGE_UNCHANGED);
         imD = cv::imread(path2,CV_LOAD_IMAGE_UNCHANGED);
         double tframe = vTimestamps[ni];

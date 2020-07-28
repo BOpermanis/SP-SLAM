@@ -194,12 +194,14 @@ void Map::clear()
 }
 
     void Map::AssociatePlanesByBoundary(ORB_SLAM2::Frame &pF, bool out) {
-
+//        out = true;
         unique_lock<mutex> lock(mMutexMap);
         pF.mbNewPlane = false;
 
         if(out)
             cout << "Plane associate in map  ID :  " << pF.mnId << "   num of Plane: "  << pF.mnPlaneNum << " TH: " << mfDisTh << endl;
+        int num_associated = 0;
+        int num_total = 0;
 
         for (int i = 0; i < pF.mnPlaneNum; ++i) {
 
@@ -218,7 +220,7 @@ void Map::clear()
 
                 if(out)
                     cout  << ":  angle : " << angle << endl;
-
+                num_total += 1;
                 if ((angle > mfAngleTh || angle < -mfAngleTh)) // associate plane
                 {
 
@@ -229,6 +231,7 @@ void Map::clear()
                             cout << "  associate!" << endl;
                         pF.mvpMapPlanes[i] = static_cast<MapPlane*>(nullptr);
                         pF.mvpMapPlanes[i] = (*sit);
+                        num_associated += 1;
                         continue;
                     }
                 }
@@ -340,6 +343,8 @@ void Map::clear()
             if(p== nullptr)
                 pF.mbNewPlane = true;
         }
+        float ratio = (num_total > 0) ? float(num_associated) / float(num_total) : 0.0;
+        cout << "association ratio: " << ratio << endl;
     }
 
 

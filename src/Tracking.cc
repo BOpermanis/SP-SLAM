@@ -284,6 +284,14 @@ cv::Mat Tracking::GrabImageMonocular(const cv::Mat &im, const double &timestamp)
 
 void Tracking::Track()
 {
+
+//    float s = 0;
+//    for(auto coef: mpMap->GetAllMapPlanes()){
+//        s += cv::sum(coef->GetWorldPos())[0];
+//    }
+//    cout << "sum of plane coefs " << s << endl;
+//    if (s!=s) throw;
+
     if(mState==NO_IMAGES_YET)
     {
         mState = NOT_INITIALIZED;

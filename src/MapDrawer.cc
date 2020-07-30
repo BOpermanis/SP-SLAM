@@ -88,11 +88,11 @@ void MapDrawer::DrawMapPoints()
 }
 
 void MapDrawer::DrawMapPlanes(bool bAssumed) {
-    const vector<MapPlane*> &vpMPs = mpMap->GetAllMapPlanes();
-    if(vpMPs.empty())
-        return;
-    glPointSize(mPointSize/2);
-    glBegin(GL_POINTS);
+//    const vector<MapPlane*> &vpMPs = mpMap->GetAllMapPlanes();
+//    if(vpMPs.empty())
+//        return;
+//    glPointSize(mPointSize/2);
+//    glBegin(GL_POINTS);
 //    pcl::VoxelGrid<PointT>  voxel;
 //    voxel.setLeafSize( 0.01, 0.01, 0.01);
 //    for(auto pMP : vpMPs){
@@ -127,7 +127,7 @@ void MapDrawer::DrawMapPlanes(bool bAssumed) {
 //            glVertex3f(p.x, p.y, p.z);
 //        }
 //    }
-    glEnd();
+//    glEnd();
 }
 
 void MapDrawer::DrawKeyFrames(const bool bDrawKF, const bool bDrawGraph)

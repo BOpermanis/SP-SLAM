@@ -31,9 +31,7 @@ namespace ORB_SLAM2{
     mutex MapPlane::mGlobalMutex;
 
     MapPlane::MapPlane(const cv::Mat &Pos, ORB_SLAM2::KeyFrame *pRefKF, int idx, Map* pMap, bool s):
-    mnBALocalForKF(0),
-//    mvBoundaryPoints(new PointCloud()),
-    mpMap(pMap), mbSeen(s), mpRefKF(pRefKF), mbBad(false) {
+    mnBALocalForKF(0), mpMap(pMap), mbSeen(s), mpRefKF(pRefKF), mbBad(false) {
         Pos.copyTo(mWorldPos);
         mnId = nLastId++;
         if(mnId == 1)
@@ -53,6 +51,7 @@ namespace ORB_SLAM2{
             Transformation(pRefKF->mvNotSeenBoundaryPoints[idx], mvBoundaryPoints, T);
             AddNotSeenObservation(pRefKF, idx);
         }
+
     }
 
     void MapPlane::AddObservation(ORB_SLAM2::KeyFrame *pKF, int idx) {
@@ -155,6 +154,8 @@ namespace ORB_SLAM2{
     {
         unique_lock<mutex> lock2(mGlobalMutex);
         unique_lock<mutex> lock(mMutexPos);
+//        float s = cv::sum(Pos)[0];
+//        if(s!=s) throw;
         Pos.copyTo(mWorldPos);
     }
 

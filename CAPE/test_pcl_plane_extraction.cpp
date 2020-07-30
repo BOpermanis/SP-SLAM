@@ -32,6 +32,7 @@
 #include <pcl/features/integral_image_normal.h>
 #include <iostream>
 #include <fstream>
+#include "CAPE/frame.cpp"
 
 using namespace std;
 
@@ -98,104 +99,8 @@ std::map<string, float> loadCalibParameters(string filepath){
 typedef pcl::PointXYZRGB PointT;
 typedef pcl::PointCloud <PointT> PointCloud;
 
-void apply_pcl(const cv::Mat &imDepth, string filepath){
-
-    std::map<string, float> params;
-    cv::Mat K_rgb, K_ir;
-
-    cv::FileStorage fs(filepath,cv::FileStorage::READ);
-    fs["RGB_intrinsic_params"]>>K_rgb;
-    fs["IR_intrinsic_params"]>>K_ir;
-
-    float fx = K_ir.at<double>(0,0); float fy = K_ir.at<double>(1,1);
-    float cx = K_ir.at<double>(0,2); float cy = K_ir.at<double>(1,2);
-    float invfx = 1.0f/fx;
-    float invfy = 1.0f/fy;
-
-    int cloudDis = 3;
-    int min_plane = 500;
-    float AngTh = 3.0;
-    float DisTh = 0.05;
-
-    PointCloud::Ptr inputCloud( new PointCloud() );
-    for ( int m=0; m<imDepth.rows; m+=cloudDis )
-    {
-        for ( int n=0; n<imDepth.cols; n+=cloudDis )
-        {
-            float d = imDepth.ptr<float>(m)[n];
-            PointT p;
-            p.z = d;
-            p.x = ( n - cx) * p.z / fx;
-            p.y = ( m - cy) * p.z / fy;
-            p.r = 0;
-            p.g = 0;
-            p.b = 250;
-
-            inputCloud->points.push_back(p);
-        }
-    }
-    inputCloud->height = ceil(imDepth.rows/float(cloudDis));
-    inputCloud->width = ceil(imDepth.cols/float(cloudDis));
-
-    pcl::IntegralImageNormalEstimation<PointT, pcl::Normal> ne;
-    pcl::PointCloud<pcl::Normal>::Ptr cloud_normals(new pcl::PointCloud<pcl::Normal>);
-    ne.setNormalEstimationMethod(ne.AVERAGE_3D_GRADIENT);
-    ne.setMaxDepthChangeFactor(0.05f);
-    ne.setNormalSmoothingSize(10.0f);
-    ne.setInputCloud(inputCloud);
-    ne.compute(*cloud_normals);
-
-    vector<pcl::ModelCoefficients> coefficients;
-    vector<pcl::PointIndices> inliers;
-    pcl::PointCloud<pcl::Label>::Ptr labels ( new pcl::PointCloud<pcl::Label> );
-    vector<pcl::PointIndices> label_indices;
-    vector<pcl::PointIndices> boundary;
-
-    pcl::OrganizedMultiPlaneSegmentation< PointT, pcl::Normal, pcl::Label > mps;
-    mps.setMinInliers (min_plane);
-    mps.setAngularThreshold (0.017453 * AngTh);
-    mps.setDistanceThreshold (DisTh);
-    mps.setInputNormals (cloud_normals);
-    mps.setInputCloud (inputCloud);
-    std::vector<pcl::PlanarRegion<PointT>, Eigen::aligned_allocator<pcl::PlanarRegion<PointT>>> regions;
-    mps.segmentAndRefine (regions, coefficients, inliers, labels, label_indices, boundary);
-
-    pcl::ExtractIndices<PointT> extract;
-    extract.setInputCloud(inputCloud);
-    extract.setNegative(false);
-    for (auto coef: coefficients){
-        cout << "222 ";
-        for(auto a: coef.values){
-            cout << a << " ";
-        }
-        cout << endl;
-    }
-
-    for (int i = 0; i < inliers.size(); ++i) {
-        PointCloud::Ptr planeCloud(new PointCloud());
-        cv::Mat coef = (cv::Mat_<float>(4,1) << coefficients[i].values[0],
-                coefficients[i].values[1],
-                coefficients[i].values[2],
-                coefficients[i].values[3]);
-        if(coef.at<float>(3) < 0)
-            coef = -coef;
-
-//            extract.setIndices(pcl::PointIndicesConstPtr(inliers[i]));
-        extract.setIndices(boost::make_shared<pcl::PointIndices>(inliers[i]));
-        extract.filter(*planeCloud);
 
 
-        PointCloud::Ptr boundaryPoints(new PointCloud());
-        // boundaryPoints->points ir std::vector<PointT, Eigen::aligned_allocator<PointT> > points;
-        boundaryPoints->points = regions[i].getContour();
-//        for(auto &a: *boundaryPoints){
-//            cout << a << endl;
-//        }
-//        mvBoundaryPoints.push_back(*boundaryPoints);
-//        mvPlaneCoefficients.push_back(coef);
-    }
-
-}
 cv::Mat plane_mask(const cv::Mat &seg, uchar i_plane){
     cv::Mat mask = cv::Mat::zeros(seg.rows, seg.cols, CV_8U);
     for(int i=0; i<seg.rows; i++)
@@ -251,6 +156,7 @@ int main(int argc, char ** argv){
     cv::Mat K_rgb, K_ir, dist_coeffs_rgb, dist_coeffs_ir, R_stereo, t_stereo;
     stringstream calib_path;
     calib_path<<string_buff.str()<<"/calib_params.xml";
+
     auto params = loadCalibParameters(calib_path.str());
 
     auto plane_detector = capewrap(params);
@@ -380,13 +286,6 @@ int main(int argc, char ** argv){
                 cout << "33 " << pt << " " << d_img.at<float>(pt.x, pt.y) << endl;
             }
 
-
-
-
-//            PointCloud::Ptr boundaryPoints(new PointCloud());
-//
-//            std::vector<PointT, Eigen::aligned_allocator<PointT> > points;
-
             cv::Mat coef = (cv::Mat_<float>(4,1) <<
                     output.plane_params[i_plane].normal[0],
                     output.plane_params[i_plane].normal[1],
@@ -421,7 +320,9 @@ int main(int argc, char ** argv){
             cv::imshow("test", mask);
             cv::waitKey(0);
         }
-        apply_pcl(d_img, calib_path.str());
+
+        auto frame = Frame();
+        frame.apply_pcl(d_img);
 
         cout<<"Nr planes:"<<output.nr_planes<<endl;
 //        cv::imshow("Seg", seg_rz);

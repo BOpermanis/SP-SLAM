@@ -773,9 +773,10 @@ cv::Mat Frame::UnprojectStereo(const int &i)
             coef.at<float>(1) = capeout.plane_params[i_plane].normal[1];
             coef.at<float>(2) = capeout.plane_params[i_plane].normal[2];
             coef.at<float>(3) = capeout.plane_params[i_plane].d;
-            float s = coef.at<float>(0) + coef.at<float>(1) + coef.at<float>(2) + coef.at<float>(3);
+//            float s = coef.at<float>(0) + coef.at<float>(1) + coef.at<float>(2) + coef.at<float>(3);
+            float s = cv::sum(coef)[0];
 
-            if (s > 0){
+            if (s > 0 && !std::isinf(s)){
 
                 auto mask = plane_mask(capeout.seg_output, i_plane);
                 Dilate(mask, mask);
@@ -817,34 +818,22 @@ cv::Mat Frame::UnprojectStereo(const int &i)
                 }
             }
         }
+//        float s = 0;
+//        for(auto c: mvPlaneCoefficients){
+//            s += c.at<float>(0);
+//            s += c.at<float>(1);
+//            s += c.at<float>(2);
+//            s += c.at<float>(3);
+//        }
+//        cout << "plane coef sum " << s << endl;
+//        if (s!=s) throw ;
     }
 
     void Frame::GeneratePlanesFromBoundries(const cv::Mat &imDepth) {
-//        pcl::SACSegmentation<PointT> segLine;
-//        pcl::ExtractIndices<PointT> extract;
-//        double lineRatio = Config::Get<double>("Line.Ratio");
-//        float disTh = Config::Get<float>("Line.DistanceThreshold");
-//        segLine.setOptimizeCoefficients(true);
-//        segLine.setModelType(pcl::SACMODEL_LINE);
-//        segLine.setMaxIterations(1000);
-//        segLine.setDistanceThreshold(disTh);
-//        PointCloud::Ptr boundPoints(new pcl::PointCloud<PointT>);
-//        PointCloud::Ptr tempPoints(new pcl::PointCloud<PointT>);
-//        PointCloud::Ptr linePoints(new pcl::PointCloud<PointT>);
-//        pcl::PointIndices::Ptr lineins (new pcl::PointIndices ());
-//        pcl::ModelCoefficients::Ptr coeffline (new pcl::ModelCoefficients ());
-
         int iend = mvBoundaryPoints.size() - 1;
         for(int i=iend; i >= 0; --i){
-//            boundPoints->points = mvBoundaryPoints[i].points;
             PointCloud boundPoints = mvBoundaryPoints[i];
             int boundSize = boundPoints.size();
-//            if(boundSize < 50){
-//                if(boundSize == 0)
-//                    GenerateBoundaryPoints(i);
-//                continue;
-//            }
-
             for (int k=0; k<boundSize; k++){
                 int k1 = k + 1;
                 if (k1 == boundSize) k1 = 0;
@@ -856,18 +845,11 @@ cv::Mat Frame::UnprojectStereo(const int &i)
                 cv::Mat coef = (cv::Mat_<float>(6,1) << pc[0], pc[1], pc[2], norm[0], norm[1], norm[2]);
                 if(LineInRange(pc) && LineInRange(pc1)) {
                     if(CaculatePlanes(mvPlaneCoefficients[i], coef)) {
-//                        for (auto &p : linePoints->points) {
-//                            p.r = 255;
-//                            p.g = 0;
-//                            p.b = 0;
-//                        }
-//                        mvPlanePoints[mvPlanePoints.size() - 1] += *linePoints;
                         mvBoundaryPoints.push_back(PointCloud{pc, pc1});
                     }
                 }
             }
         }
-
 }
 //    void Frame::GenerateBoundaryPoints(int i) {
 //        for(int j=0;j<mvPlanePoints[i].points.size();j+=20){
@@ -1010,7 +992,19 @@ cv::Mat Frame::UnprojectStereo(const int &i)
     cv::Mat Frame::ComputePlaneWorldCoeff(const int &idx) {
         cv::Mat temp;
         cv::transpose(mTcw, temp);
-        return temp*mvPlaneCoefficients[idx];
+        auto c0 = mvPlaneCoefficients[idx];
+        cv::Mat c = temp*c0;
+//        float s = 0;
+//
+//        double s1 = cv::sum(temp )[0];
+//        double s2 = cv::sum(c0 )[0];
+//        s += c.at<float>(0);
+//        s += c.at<float>(1);
+//        s += c.at<float>(2);
+//        s += c.at<float>(3);
+//        cout << "plane coef sum " << s << " " << s1 << " " << s2 << " " << std::isinf(s2) << endl;
+//        if (s!=s) throw;
+        return c;
     }
 
     cv::Mat Frame::ComputeNotSeenPlaneWorldCoeff(const int &idx) {

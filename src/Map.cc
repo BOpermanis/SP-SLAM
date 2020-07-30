@@ -223,15 +223,16 @@ void Map::clear()
                 num_total += 1;
                 if ((angle > mfAngleTh || angle < -mfAngleTh)) // associate plane
                 {
-
                     double dis = PointDistanceFromPlane(pM, (*sit)->mvBoundaryPoints, out);
                     if(dis < ldTh) {
+                        num_associated += 1;
+
                         ldTh = dis;
-                        if (out)
+                        if (out) {
                             cout << "  associate!" << endl;
+                        }
                         pF.mvpMapPlanes[i] = static_cast<MapPlane*>(nullptr);
                         pF.mvpMapPlanes[i] = (*sit);
-                        num_associated += 1;
                         continue;
                     }
                 }

@@ -24,16 +24,18 @@
 #include "KeyFrame.h"
 #include <pangolin/pangolin.h>
 #include <mutex>
-//#include <pcl/common/transforms.h>
-//#include <pcl/point_types.h>
-//#include <pcl/filters/voxel_grid.h>
+#include <pcl/common/transforms.h>
+#include <pcl/point_types.h>
+#include <pcl/filters/voxel_grid.h>
+#include <random>
+
 namespace ORB_SLAM2
 {
-//    typedef pcl::PointXYZRGB PointT;
-//    typedef pcl::PointCloud<PointT> PointCloud;
+    typedef pcl::PointXYZRGB PointT;
+    typedef pcl::PointCloud<PointT> PointCloud;
 
-    typedef cv::Vec3f PointT;
-    typedef std::vector<PointT> PointCloud;
+//    typedef cv::Vec3f PointT;
+//    typedef std::vector<PointT> PointCloud;
 
 MapDrawer::MapDrawer(Map* pMap, const string &strSettingPath):mpMap(pMap)
 {
@@ -88,46 +90,84 @@ void MapDrawer::DrawMapPoints()
 }
 
 void MapDrawer::DrawMapPlanes(bool bAssumed) {
-//    const vector<MapPlane*> &vpMPs = mpMap->GetAllMapPlanes();
-//    if(vpMPs.empty())
-//        return;
-//    glPointSize(mPointSize/2);
-//    glBegin(GL_POINTS);
-//    pcl::VoxelGrid<PointT>  voxel;
-//    voxel.setLeafSize( 0.01, 0.01, 0.01);
-//    for(auto pMP : vpMPs){
-//        map<KeyFrame*, int> observations = pMP->GetObservations();
-//        float ir = pMP->mRed;
-//        float ig = pMP->mGreen;
-//        float ib = pMP->mBlue;
-//        float norm = sqrt(ir*ir + ig*ig + ib*ib);
-//        glColor3f(ir/norm, ig/norm, ib/norm);
-//        PointCloud::Ptr allCloudPoints(new PointCloud);
-//        for(auto mit = observations.begin(), mend = observations.end(); mit != mend; mit++){
-//            KeyFrame* frame = mit->first;
-//            int id = mit->second;
-//            if(!bAssumed && id >= frame->mnRealPlaneNum){
-//                continue;
+    std::default_random_engine generator;
+
+    const vector<MapPlane*> &vpMPs = mpMap->GetAllMapPlanes();
+    if(vpMPs.empty())
+        return;
+    glPointSize(mPointSize/2);
+    glBegin(GL_POINTS);
+    pcl::VoxelGrid<PointT>  voxel;
+    voxel.setLeafSize( 0.01, 0.01, 0.01);
+    for(auto pMP : vpMPs){
+        map<KeyFrame*, int> observations = pMP->GetObservations();
+        float ir = pMP->mRed;
+        float ig = pMP->mGreen;
+        float ib = pMP->mBlue;
+        float norm = sqrt(ir*ir + ig*ig + ib*ib);
+        glColor3f(ir/norm, ig/norm, ib/norm);
+        PointCloud::Ptr allCloudPoints(new PointCloud);
+        for(auto mit = observations.begin(), mend = observations.end(); mit != mend; mit++){
+            KeyFrame* frame = mit->first;
+            int id = mit->second;
+            if(!bAssumed && id >= frame->mnRealPlaneNum){
+                continue;
+            }
+            Eigen::Isometry3d T = ORB_SLAM2::Converter::toSE3Quat( frame->GetPose() );
+            PointCloud::Ptr cloud(new PointCloud);
+
+            PointCloud::Ptr linePoints(new PointCloud());
+
+            PointCloud points;
+            int n = frame->mvBoundaryPoints[id].size();
+            int k1;
+            cv::Vec3f p1, p2;
+            int num = 1000;
+            float d = 1 / num;
+            std::normal_distribution<double> distribution(0.0,0.02);
+
+            for(int k = 0; k<n; k++){
+                k1 = k + 1;
+                if(k1==n) k1 = 0;
+                p1 = frame->mvBoundaryPoints[id][k];
+                p2 = frame->mvBoundaryPoints[id][k1];
+                float lambda = 0.0;
+                for(int kk = 0; kk <= num; kk ++){
+                    PointT p;
+                    p.x = p1[0] * lambda + p2[0] * (1-lambda) + distribution(generator);
+                    p.y = p1[1] * lambda + p2[1] * (1-lambda) + distribution(generator);
+                    p.z = p1[2] * lambda + p2[2] * (1-lambda) + distribution(generator);
+                    points.push_back(p);
+                    lambda += d;
+                }
+            }
+//            for (auto &pt_cv: frame->mvBoundaryPoints[id]){
+//                PointT p;
+//                p.x = pt_cv[0];
+//                p.y = pt_cv[1];
+//                p.z = pt_cv[2];
+//                points.push_back(p);
 //            }
-//            Eigen::Isometry3d T = ORB_SLAM2::Converter::toSE3Quat( frame->GetPose() );
-//            PointCloud::Ptr cloud(new PointCloud);
-//            pcl::transformPointCloud( frame->mvPlanePoints[id], *cloud, T.inverse().matrix());
-//            *allCloudPoints += *cloud;
-//        }
-//        PointCloud::Ptr tmp(new PointCloud());
-//        voxel.setInputCloud( allCloudPoints );
-//        voxel.filter( *tmp );
-//
-//        for(auto& p : tmp->points){
-//            if(bAssumed && (p.r ==255 || p.g ==255 || p.b ==255)){
-//                glColor3f(1, 0, 0);
-//            }else{
-//                glColor3f(ir/norm, ig/norm, ib/norm);
-//            }
-//            glVertex3f(p.x, p.y, p.z);
-//        }
-//    }
-//    glEnd();
+            pcl::transformPointCloud( points, *cloud, T.inverse().matrix());
+            *allCloudPoints += *cloud;
+        }
+
+
+        PointCloud::Ptr tmp(new PointCloud());
+        voxel.setInputCloud( allCloudPoints );
+        voxel.filter( *tmp );
+
+//        cout << "allCloudPoints.size() " << allCloudPoints->size() << " " << tmp->size() << endl;
+        for(auto& p : tmp->points){
+            if(bAssumed && (p.r ==255 || p.g ==255 || p.b ==255)){
+                glColor3f(1, 0, 0);
+            }else{
+                glColor3f(ir/norm, ig/norm, ib/norm);
+            }
+            glVertex3f(p.x, p.y, p.z);
+        }
+    }
+    glEnd();
 }
 
 void MapDrawer::DrawKeyFrames(const bool bDrawKF, const bool bDrawGraph)

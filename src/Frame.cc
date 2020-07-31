@@ -766,6 +766,7 @@ cv::Mat Frame::UnprojectStereo(const int &i)
 
     void Frame::ComputePlanesFromOrganizedPointCloud(const cv::Mat &imDepth, capewrap* cape){
         auto capeout = cape->process(imDepth);
+        float ratio;
         for(uchar i_plane = 1; i_plane<=capeout.nr_planes; i_plane++){
 
             cv::Mat coef = cv::Mat_<float>(4,1);
@@ -796,8 +797,13 @@ cv::Mat Frame::UnprojectStereo(const int &i)
                 }
                 double rel_area = cv::contourArea(contour0) / (imDepth.cols * imDepth.rows);
                 if (rel_area > 0.1){
-                    double epsilon = 0.1*cv::arcLength(contour0,true);
-                    cv::approxPolyDP(contour0, border, epsilon, false);
+                    ratio = 0.1;
+                    while (true){
+                        double epsilon = ratio*cv::arcLength(contour0,true);
+                        cv::approxPolyDP(contour0, border, epsilon, false);
+                        if(border.size() > 2) break;
+                        ratio *= 0.7;
+                    }
 
                     if(coef.at<float>(3) < 0) {
                         coef = -coef;
@@ -818,15 +824,6 @@ cv::Mat Frame::UnprojectStereo(const int &i)
                 }
             }
         }
-//        float s = 0;
-//        for(auto c: mvPlaneCoefficients){
-//            s += c.at<float>(0);
-//            s += c.at<float>(1);
-//            s += c.at<float>(2);
-//            s += c.at<float>(3);
-//        }
-//        cout << "plane coef sum " << s << endl;
-//        if (s!=s) throw ;
     }
 
     void Frame::GeneratePlanesFromBoundries(const cv::Mat &imDepth) {

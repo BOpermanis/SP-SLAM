@@ -327,7 +327,7 @@ int main(int argc, char ** argv){
 //            cv::waitKey(0);
         }
 
-        cout<<"Nr planes:"<<output.nr_planes<<endl;
+//        cout<<"Nr planes:"<<output.nr_planes<<endl;
 
         auto frame = Frame();
         frame.apply_pcl(d_img);

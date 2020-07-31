@@ -201,6 +201,7 @@ void Map::clear()
         if(out)
             cout << "Plane associate in map  ID :  " << pF.mnId << "   num of Plane: "  << pF.mnPlaneNum << " TH: " << mfDisTh << endl;
         int num_associated = 0;
+        float sum_dis = 0.0;
         int num_total = 0;
 
         for (int i = 0; i < pF.mnPlaneNum; ++i) {
@@ -224,8 +225,8 @@ void Map::clear()
                 if ((angle > mfAngleTh || angle < -mfAngleTh)) // associate plane
                 {
                     double dis = PointDistanceFromPlane(pM, (*sit)->mvBoundaryPoints, out);
+                    sum_dis += dis;
                     if(dis < ldTh) {
-                        num_associated += 1;
 
                         ldTh = dis;
                         if (out) {
@@ -239,6 +240,7 @@ void Map::clear()
 
                 // vertical planes
                 if (angle < lverTh && angle > -lverTh) {
+
                     if(out)
                         cout << "  vertical!" << endl;
                     lverTh = abs(angle);
@@ -345,7 +347,10 @@ void Map::clear()
                 pF.mbNewPlane = true;
         }
         float ratio = (num_total > 0) ? float(num_associated) / float(num_total) : 0.0;
-        cout << "association ratio: " << ratio << endl;
+        float average_dis = (num_total > 0) ? sum_dis / float(num_total) : 100;
+
+//        cout << "association ratio: " << ratio << endl;
+//        cout << "average distance: " << average_dis << endl;
     }
 
 

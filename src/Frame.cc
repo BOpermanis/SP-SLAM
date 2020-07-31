@@ -767,7 +767,7 @@ cv::Mat Frame::UnprojectStereo(const int &i)
     void Frame::ComputePlanesFromOrganizedPointCloud(const cv::Mat &imDepth, capewrap* cape){
         auto capeout = cape->process(imDepth);
         float ratio;
-        for(uchar i_plane = 1; i_plane<=capeout.nr_planes; i_plane++){
+        for(uchar i_plane = 0; i_plane<capeout.nr_planes; i_plane++){
 
             cv::Mat coef = cv::Mat_<float>(4,1);
             coef.at<float>(0) = capeout.plane_params[i_plane].normal[0];
@@ -779,7 +779,7 @@ cv::Mat Frame::UnprojectStereo(const int &i)
 
             if (s > 0 && !std::isinf(s)){
 
-                auto mask = plane_mask(capeout.seg_output, i_plane);
+                auto mask = plane_mask(capeout.seg_output, i_plane+1);
                 Dilate(mask, mask);
                 Erosion(mask, mask);
                 vector<vector<cv::Point> > contours;

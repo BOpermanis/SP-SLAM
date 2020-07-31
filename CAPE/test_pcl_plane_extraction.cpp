@@ -144,6 +144,7 @@ double PointDistanceFromPlane(const cv::Mat &plane, const PointCloud &boundry, b
                          plane.at<float>(1, 0) * p[1] +
                          plane.at<float>(2, 0) * p[2] +
                          plane.at<float>(3, 0));
+        if (dis!=dis) throw;
         if(dis < res)
             res = dis;
     }
@@ -249,9 +250,9 @@ int main(int argc, char ** argv){
         for (const auto out: output.plane_params){
             cout << "111 ";
             for(auto n: out.normal){
-                cout << n << " ";
+                cout << float(n) << " ";
             }
-            cout << " " << out.d << endl;
+            cout << " " << float(out.d) << endl;
         }
 
 //        cv::FileStorage file("/home/slam_data/data_sets/seg_output.csv", cv::FileStorage::WRITE);
@@ -260,8 +261,8 @@ int main(int argc, char ** argv){
 
 
 
-        for(uchar i_plane = 1; i_plane<=output.nr_planes; i_plane++){
-            auto mask = plane_mask(output.seg_output, i_plane);
+        for(uchar i_plane = 0; i_plane<output.nr_planes; i_plane++){
+            auto mask = plane_mask(output.seg_output, i_plane+1);
 //            writeMatToFile(mask, "/home/slam_data/data_sets/seg_output.csv");
 //            cv::Mat contour;
 
@@ -296,17 +297,19 @@ int main(int argc, char ** argv){
             cv::drawContours( mask, contours, 0, color, CV_FILLED, 8);
             cv::drawContours( mask, contours111, 0, color1, 3, 8);
 
-            for (auto &pt: border){
-                float d = d_img.at<float>(pt.x, pt.y);
-                cout << "33 " << pt << " " << d_img.at<float>(pt.x, pt.y) << endl;
-            }
+//            for (auto &pt: border){
+//                float d = d_img.at<float>(pt.x, pt.y);
+//                cout << "33 " << pt << " " << d_img.at<float>(pt.x, pt.y) << endl;
+//            }
 
             cv::Mat coef = (cv::Mat_<float>(4,1) <<
-                    output.plane_params[i_plane].normal[0],
-                    output.plane_params[i_plane].normal[1],
-                    output.plane_params[i_plane].normal[2],
-                    -output.plane_params[i_plane].d);
+                                                 (float)output.plane_params[i_plane].normal[0],
+                    (float)output.plane_params[i_plane].normal[1],
+                          (float)output.plane_params[i_plane].normal[2],
+                          (float)-output.plane_params[i_plane].d);
 
+
+            cout << "coef " << coef << endl;
             if(coef.at<float>(3) < 0)
                 coef = -coef;
 
@@ -317,7 +320,7 @@ int main(int argc, char ** argv){
                 float x = (pt.x - plane_detector.cx_ir) / plane_detector.fx_ir;
 
                 float theta = coef.at<float>(3) / (x * coef.at<float>(0) + y * coef.at<float>(1) + coef.at<float>(2));
-
+                cout << "theta " << theta << endl;
                 boundaryPoints.push_back(PointT(x * theta, y * theta, theta));
 
             }

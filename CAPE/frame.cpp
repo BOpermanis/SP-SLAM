@@ -153,13 +153,13 @@ public:
         pcl::ExtractIndices<PointT> extract;
         extract.setInputCloud(inputCloud);
         extract.setNegative(false);
-        for (auto coef: coefficients){
-            cout << "222 ";
-            for(auto a: coef.values){
-                cout << a << " ";
-            }
-            cout << endl;
-        }
+//        for (auto coef: coefficients){
+//            cout << "222 ";
+//            for(auto a: coef.values){
+//                cout << a << " ";
+//            }
+//            cout << endl;
+//        }
 
         for (int i = 0; i < inliers.size(); ++i) {
             PointCloud::Ptr planeCloud(new PointCloud());
@@ -345,7 +345,7 @@ public:
                     segLine.setInputCloud(boundPoints);
                     segLine.segment(*lineins, *coeffline);
                     if (lineins->indices.size() < lineRatio * boundSize){
-                        cout << "lineins->indices.size() < lineRatio * boundSize" << endl;
+//                        cout << "lineins->indices.size() < lineRatio * boundSize" << endl;
                         break;
                     }
 

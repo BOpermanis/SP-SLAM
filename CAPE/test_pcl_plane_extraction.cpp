@@ -96,9 +96,11 @@ std::map<string, float> loadCalibParameters(string filepath){
     }
 }
 
-typedef pcl::PointXYZRGB PointT;
-typedef pcl::PointCloud <PointT> PointCloud;
+//typedef pcl::PointXYZRGB PointT;
+//typedef pcl::PointCloud <PointT> PointCloud;
 
+typedef cv::Vec3f PointT;
+typedef  std::vector<PointT> PointCloud;
 
 
 cv::Mat plane_mask(const cv::Mat &seg, uchar i_plane){
@@ -134,6 +136,19 @@ void Dilate( cv::Mat &src, cv::Mat &dilation_dst)
     cv::dilate( src, dilation_dst, element );
 }
 
+
+double PointDistanceFromPlane(const cv::Mat &plane, const PointCloud &boundry, bool out=false) {
+    double res = 100;
+    for(auto &p : boundry){
+        double dis = abs(plane.at<float>(0, 0) * p[0] +
+                         plane.at<float>(1, 0) * p[1] +
+                         plane.at<float>(2, 0) * p[2] +
+                         plane.at<float>(3, 0));
+        if(dis < res)
+            res = dis;
+    }
+    return res;
+}
 
 
 int main(int argc, char ** argv){
@@ -290,12 +305,12 @@ int main(int argc, char ** argv){
                     output.plane_params[i_plane].normal[0],
                     output.plane_params[i_plane].normal[1],
                     output.plane_params[i_plane].normal[2],
-                    output.plane_params[i_plane].d);
+                    -output.plane_params[i_plane].d);
 
             if(coef.at<float>(3) < 0)
                 coef = -coef;
 
-            std::vector<PointT, Eigen::aligned_allocator<PointT> > points;
+            PointCloud boundaryPoints;
             for(auto &pt: border){
 
                 float y = (pt.y - plane_detector.cy_ir) / plane_detector.fy_ir;
@@ -303,28 +318,24 @@ int main(int argc, char ** argv){
 
                 float theta = coef.at<float>(3) / (x * coef.at<float>(0) + y * coef.at<float>(1) + coef.at<float>(2));
 
-                PointT p;
-                p.z = theta;
-                p.x = x * theta;
-                p.y = y * theta;
+                boundaryPoints.push_back(PointT(x * theta, y * theta, theta));
 
-                p.r = 0;
-                p.g = 0;
-                p.b = 250;
-                points.push_back(p);
             }
-            PointCloud::Ptr boundaryPoints(new PointCloud());
-            boundaryPoints->points = points;
-
-
-            cv::imshow("test", mask);
-            cv::waitKey(0);
+            double d = PointDistanceFromPlane(coef, boundaryPoints);
+            cout << "PointDistanceFromPlane(coef, boundaryPoints) " << d << endl;
+//            cv::imshow("test", mask);
+//            cv::waitKey(0);
         }
+
+        cout<<"Nr planes:"<<output.nr_planes<<endl;
 
         auto frame = Frame();
         frame.apply_pcl(d_img);
-
-        cout<<"Nr planes:"<<output.nr_planes<<endl;
+        frame.GeneratePlanesFromBoundries(d_img);
+//        cout << "frame.mvPlaneCoefficients.size() = " << frame.mvPlaneCoefficients.size() << endl;
+//        cout << "frame.mvBoundaryPoints.size() = " << frame.mvBoundaryPoints.size() << endl;
+//        cout << "frame.mvBoundaryPoints[0].size() = " << frame.mvBoundaryPoints[0].size() << endl;
+        cout << "plane dists " << frame.PointDistanceFromPlane(frame.mvPlaneCoefficients[0], frame.mvBoundaryPoints[0], false) << endl;
 //        cv::imshow("Seg", seg_rz);
 //        cv::waitKey(1);
 //        sleep(10);

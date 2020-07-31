@@ -24,10 +24,11 @@
 #include <cstdio>
 using namespace std;
 
-typedef pcl::PointXYZRGB PointT;
-typedef pcl::PointCloud <PointT> PointCloud;
+
 
 class Frame {
+    typedef pcl::PointXYZRGB PointT;
+    typedef pcl::PointCloud <PointT> PointCloud;
 public:
         long unsigned int nNextId=0;
         bool mbInitialComputations=true;
@@ -101,6 +102,10 @@ public:
 
     void apply_pcl(const cv::Mat &imDepth){
 
+        mnMinX = 0.0f;
+        mnMinY = 0.0f;
+        mnMaxX = imDepth.cols;
+        mnMaxY = imDepth.rows;
 
         PointCloud::Ptr inputCloud( new PointCloud() );
         for ( int m=0; m<imDepth.rows; m+=cloudDis )
@@ -179,6 +184,8 @@ public:
         mvBoundaryPoints.push_back(*boundaryPoints);
         mvPlaneCoefficients.push_back(coef);
         }
+
+
 
     }
 
@@ -331,12 +338,14 @@ public:
                 if(boundSize < 50){
                     if(boundSize == 0)
                         GenerateBoundaryPoints(i);
+                    cout << "boundSize < 50" << endl;
                     continue;
                 }
                 for(int j=0; j < 4; j++) {
                     segLine.setInputCloud(boundPoints);
                     segLine.segment(*lineins, *coeffline);
                     if (lineins->indices.size() < lineRatio * boundSize){
+                        cout << "lineins->indices.size() < lineRatio * boundSize" << endl;
                         break;
                     }
 
@@ -347,6 +356,7 @@ public:
                     cv::Mat pc = (cv::Mat_<float>(3,1) << coeffline->values[0], coeffline->values[1], coeffline->values[2]);
 
                     if(LineInRange(pc) && IsBorderLine(linePoints,imDepth)) {
+                        cout << "LineInRange(pc) && IsBorderLine(linePoints,imDepth)" << endl;
                         cv::Mat coef = (cv::Mat_<float>(6,1) << coeffline->values[0],
                                 coeffline->values[1],
                                 coeffline->values[2],
@@ -354,6 +364,7 @@ public:
                                 coeffline->values[4],
                                 coeffline->values[5]);
                         if(CaculatePlanes(mvPlaneCoefficients[i], coef)){
+                            cout << "CaculatePlanes(mvPlaneCoefficients[i], coef)" << endl;
                             for(auto &p : linePoints->points){
                                 p.r = 255;
                                 p.g = 0;
@@ -528,5 +539,22 @@ public:
 //            cv::transpose(mTcw, temp);
 //            return temp*mvNotSeenPlaneCoefficients[idx];
 //        }
+
+    double PointDistanceFromPlane(const cv::Mat &plane, PointCloud boundry, bool out) {
+        double res = 100;
+        if(out)
+            cout << " compute dis: " << endl;
+        for(auto p : boundry.points){
+            double dis = abs(plane.at<float>(0, 0) * p.x +
+                             plane.at<float>(1, 0) * p.y +
+                             plane.at<float>(2, 0) * p.z +
+                             plane.at<float>(3, 0));
+            if(dis < res)
+                res = dis;
+        }
+        if(out)
+            cout << endl << "ave : " << res << endl;
+        return res;
+        }
 
 };

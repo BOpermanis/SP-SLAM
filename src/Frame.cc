@@ -772,7 +772,7 @@ cv::Mat Frame::UnprojectStereo(const int &i)
             coef.at<float>(0) = capeout.plane_params[i_plane].normal[0];
             coef.at<float>(1) = capeout.plane_params[i_plane].normal[1];
             coef.at<float>(2) = capeout.plane_params[i_plane].normal[2];
-            coef.at<float>(3) = capeout.plane_params[i_plane].d;
+            coef.at<float>(3) = -capeout.plane_params[i_plane].d;
 //            float s = coef.at<float>(0) + coef.at<float>(1) + coef.at<float>(2) + coef.at<float>(3);
             float s = cv::sum(coef)[0];
 

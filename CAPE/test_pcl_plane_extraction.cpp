@@ -144,6 +144,7 @@ double PointDistanceFromPlane(const cv::Mat &plane, const PointCloud &boundry, b
                          plane.at<float>(1, 0) * p[1] +
                          plane.at<float>(2, 0) * p[2] +
                          plane.at<float>(3, 0));
+        cout << "aaa " << dis << endl;
         if (dis!=dis) throw;
         if(dis < res)
             res = dis;
@@ -306,7 +307,7 @@ int main(int argc, char ** argv){
                                                  (float)output.plane_params[i_plane].normal[0],
                     (float)output.plane_params[i_plane].normal[1],
                           (float)output.plane_params[i_plane].normal[2],
-                          (float)-output.plane_params[i_plane].d);
+                          (float)output.plane_params[i_plane].d);
 
 
             cout << "coef " << coef << endl;
@@ -319,7 +320,7 @@ int main(int argc, char ** argv){
                 float y = (pt.y - plane_detector.cy_ir) / plane_detector.fy_ir;
                 float x = (pt.x - plane_detector.cx_ir) / plane_detector.fx_ir;
 
-                float theta = coef.at<float>(3) / (x * coef.at<float>(0) + y * coef.at<float>(1) + coef.at<float>(2));
+                float theta = -coef.at<float>(3) / (x * coef.at<float>(0) + y * coef.at<float>(1) + coef.at<float>(2));
                 cout << "theta " << theta << endl;
                 boundaryPoints.push_back(PointT(x * theta, y * theta, theta));
 
@@ -332,13 +333,13 @@ int main(int argc, char ** argv){
 
 //        cout<<"Nr planes:"<<output.nr_planes<<endl;
 
-        auto frame = Frame();
-        frame.apply_pcl(d_img);
-        frame.GeneratePlanesFromBoundries(d_img);
+//        auto frame = Frame();
+//        frame.apply_pcl(d_img);
+//        frame.GeneratePlanesFromBoundries(d_img);
 //        cout << "frame.mvPlaneCoefficients.size() = " << frame.mvPlaneCoefficients.size() << endl;
 //        cout << "frame.mvBoundaryPoints.size() = " << frame.mvBoundaryPoints.size() << endl;
 //        cout << "frame.mvBoundaryPoints[0].size() = " << frame.mvBoundaryPoints[0].size() << endl;
-        cout << "plane dists " << frame.PointDistanceFromPlane(frame.mvPlaneCoefficients[0], frame.mvBoundaryPoints[0], false) << endl;
+//        cout << "plane dists " << frame.PointDistanceFromPlane(frame.mvPlaneCoefficients[0], frame.mvBoundaryPoints[0], false) << endl;
 //        cv::imshow("Seg", seg_rz);
 //        cv::waitKey(1);
 //        sleep(10);

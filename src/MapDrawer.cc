@@ -89,8 +89,65 @@ void MapDrawer::DrawMapPoints()
     glEnd();
 }
 
+
+
+typedef std::vector<cv::Vec3f> Points;
+
+//    for i in range(len(poly)-1):
+//      a, b = poly[i], poly[i + 1]
+//      v = (b-a) / n
+//      sides.append(a)
+//      for l in range(0, n):
+//          a0 = a + l * v
+//          v1 = (cent - a0) / n
+//          sides.append(a0)
+//          for l1 in range(1, n):
+//              sides.append(a0 + l1 * v1)
+
+Points make_grid(const Points &polygon){
+    Points points;
+    int n = 10;
+    int num_nodes = polygon.size();
+    cv::Vec3f cent(0.0f, 0.0f, 0.0f);
+    for (auto &pt: polygon){
+        cent[0] += pt[0];
+        cent[1] += pt[1];
+        cent[2] += pt[2];
+    }
+    cent /= (float) num_nodes;
+
+    for(int i =0; i < num_nodes-1 ; i ++){
+        cv::Vec3f a = polygon[i];
+        cv::Vec3f v = (polygon[i+1] - a) / (float) n;
+        points.push_back(a);
+        for (float l=0; l < n; l++){
+            cv::Vec3f a0 = a + l * v;
+            cv::Vec3f v1 = (cent - a0) / (float) n;
+            points.push_back(a0);
+            for (float l1=0; l1 < n; l1++){
+                points.push_back(a0 + l1 * v1);
+            }
+        }
+    }
+    return points;
+}
+
+
+    void Transformation1(const Points &cloud_in, Points &cloud_out, const cv::Mat4f &T){
+        cv::Mat vec1 = cv::Mat::ones(4, 1, CV_32F);
+        cv::Mat vec2;
+
+        for (auto &pt: cloud_in){
+            vec1.at<float>(0, 0) = pt[0];
+            vec1.at<float>(1, 0) = pt[1];
+            vec1.at<float>(2, 0) = pt[2];
+            vec2 = T * vec1;
+            float v = vec2.at<float>(3, 0);
+            cloud_out.push_back(cv::Vec3f(vec2.at<float>(0, 0) / v, vec2.at<float>(1, 0) / v, vec2.at<float>(2, 0) / v));
+        }
+    }
+
 void MapDrawer::DrawMapPlanes(bool bAssumed) {
-    std::default_random_engine generator;
 
     const vector<MapPlane*> &vpMPs = mpMap->GetAllMapPlanes();
     if(vpMPs.empty())
@@ -113,58 +170,18 @@ void MapDrawer::DrawMapPlanes(bool bAssumed) {
             if(!bAssumed && id >= frame->mnRealPlaneNum){
                 continue;
             }
-            Eigen::Isometry3d T = ORB_SLAM2::Converter::toSE3Quat( frame->GetPose() );
-            PointCloud::Ptr cloud(new PointCloud);
 
-            PointCloud::Ptr linePoints(new PointCloud());
+            Points points_global;
+            Transformation1(make_grid(frame->mvBoundaryPoints[id]), points_global, frame->GetPose().inv());
 
-            PointCloud points;
-            int n = frame->mvBoundaryPoints[id].size();
-            int k1;
-            cv::Vec3f p1, p2;
-            int num = 1000;
-            float d = 1 / num;
-            std::normal_distribution<double> distribution(0.0,0.02);
-
-            for(int k = 0; k<n; k++){
-                k1 = k + 1;
-                if(k1==n) k1 = 0;
-                p1 = frame->mvBoundaryPoints[id][k];
-                p2 = frame->mvBoundaryPoints[id][k1];
-                float lambda = 0.0;
-                for(int kk = 0; kk <= num; kk ++){
-                    PointT p;
-                    p.x = p1[0] * lambda + p2[0] * (1-lambda) + distribution(generator);
-                    p.y = p1[1] * lambda + p2[1] * (1-lambda) + distribution(generator);
-                    p.z = p1[2] * lambda + p2[2] * (1-lambda) + distribution(generator);
-                    points.push_back(p);
-                    lambda += d;
+            for(auto& p : points_global){
+                if(bAssumed ){
+                    glColor3f(1, 0, 0);
+                }else{
+                    glColor3f(ir/norm, ig/norm, ib/norm);
                 }
+                glVertex3f(p[0], p[1], p[2]);
             }
-//            for (auto &pt_cv: frame->mvBoundaryPoints[id]){
-//                PointT p;
-//                p.x = pt_cv[0];
-//                p.y = pt_cv[1];
-//                p.z = pt_cv[2];
-//                points.push_back(p);
-//            }
-            pcl::transformPointCloud( points, *cloud, T.inverse().matrix());
-            *allCloudPoints += *cloud;
-        }
-
-
-        PointCloud::Ptr tmp(new PointCloud());
-        voxel.setInputCloud( allCloudPoints );
-        voxel.filter( *tmp );
-
-//        cout << "allCloudPoints.size() " << allCloudPoints->size() << " " << tmp->size() << endl;
-        for(auto& p : tmp->points){
-            if(bAssumed && (p.r ==255 || p.g ==255 || p.b ==255)){
-                glColor3f(1, 0, 0);
-            }else{
-                glColor3f(ir/norm, ig/norm, ib/norm);
-            }
-            glVertex3f(p.x, p.y, p.z);
         }
     }
     glEnd();

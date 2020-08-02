@@ -304,10 +304,10 @@ int main(int argc, char ** argv){
 //            }
 
             cv::Mat coef = (cv::Mat_<float>(4,1) <<
-                                                 (float)output.plane_params[i_plane].normal[0],
+                    (float)output.plane_params[i_plane].normal[0],
                     (float)output.plane_params[i_plane].normal[1],
-                          (float)output.plane_params[i_plane].normal[2],
-                          (float)output.plane_params[i_plane].d);
+                    (float)output.plane_params[i_plane].normal[2],
+                    (float)output.plane_params[i_plane].d);
 
 
             cout << "coef " << coef << endl;

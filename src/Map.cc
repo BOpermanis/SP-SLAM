@@ -226,6 +226,7 @@ void Map::clear()
                 {
                     double dis = PointDistanceFromPlane(pM, (*sit)->mvBoundaryPoints, out);
                     sum_dis += dis;
+                    num_associated += 1;
                     if(dis < ldTh) {
 
                         ldTh = dis;
@@ -349,7 +350,7 @@ void Map::clear()
         float ratio = (num_total > 0) ? float(num_associated) / float(num_total) : 0.0;
         float average_dis = (num_total > 0) ? sum_dis / float(num_total) : 100;
 
-//        cout << "association ratio: " << ratio << endl;
+        cout << "association ratio: " << ratio << endl;
 //        cout << "average distance: " << average_dis << endl;
     }
 

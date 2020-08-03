@@ -44,7 +44,7 @@ endif()
 find_package(Eigen3 3.1.0 REQUIRED)
 find_package(Pangolin REQUIRED)
 #find_package( G2O REQUIRED )
-find_package( PCL 1.7 REQUIRED)
+#find_package( PCL 1.7 REQUIRED)
 
 include_directories(
 ${PROJECT_SOURCE_DIR}
@@ -53,11 +53,12 @@ ${PROJECT_SOURCE_DIR}/include
         ${PROJECT_SOURCE_DIR}/CAPE
         ${EIGEN3_INCLUDE_DIR}
 ${Pangolin_INCLUDE_DIRS}
-        ${PCL_INCLUDE_DIRS}
+        /librealsense/include
+#        ${PCL_INCLUDE_DIRS}
 #${G2O_INCLUDE_DIRS}
 )
-add_definitions( ${PCL_DEFINITIONS} )
-link_directories( ${PCL_LIBRARY_DIRS} )
+#add_definitions( ${PCL_DEFINITIONS} )
+#link_directories( ${PCL_LIBRARY_DIRS} )
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
 
@@ -111,7 +112,7 @@ ${EIGEN3_LIBS}
 ${Pangolin_LIBRARIES}
 ${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/libDBoW2.so
 ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
-        ${PCL_LIBRARIES}
+#        ${PCL_LIBRARIES}
 )
 
 # Build examples
@@ -141,3 +142,14 @@ add_executable(test_pcl_plane_extraction
         CAPE/Histogram.cpp
         CAPE/test_pcl_plane_extraction.cpp)
 target_link_libraries(test_pcl_plane_extraction ${PCL_LIBRARIES} ${OpenCV_LIBS} ${Eigen_LIBRARIES})
+
+#set(realsense2_LIBRARY /librealsense/build/CMakeFiles)
+#set(realsense_INCLUDE_DIR /librealsense/include)
+add_executable(run_realsense Examples/RGB-D/run_realsense.cpp)
+#include_directories(include /librealsense/include)
+target_link_libraries(run_realsense
+        /librealsense/build/librealsense2.so
+        /SP-SLAM/lib/libORB_SLAM2.so
+        ${OpenCV_LIBS}
+        ${Eigen_LIBRARIES}
+        ${Pangolin_LIBRARIES})

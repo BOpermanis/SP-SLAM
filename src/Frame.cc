@@ -796,7 +796,7 @@ cv::Mat Frame::UnprojectStereo(const int &i)
                     }
                 }
                 double rel_area = cv::contourArea(contour0) / (imDepth.cols * imDepth.rows);
-                if (rel_area > 0.1){
+                if (rel_area > 0.05){
                     ratio = 0.1;
                     while (true){
                         double epsilon = ratio*cv::arcLength(contour0,true);

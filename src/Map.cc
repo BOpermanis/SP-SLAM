@@ -350,7 +350,7 @@ void Map::clear()
         float ratio = (num_total > 0) ? float(num_associated) / float(num_total) : 0.0;
         float average_dis = (num_total > 0) ? sum_dis / float(num_total) : 100;
 
-        cout << "association ratio: " << ratio << endl;
+//        cout << "association ratio: " << ratio << endl;
 //        cout << "average distance: " << average_dis << endl;
     }
 

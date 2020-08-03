@@ -24,15 +24,15 @@
 #include "KeyFrame.h"
 #include <pangolin/pangolin.h>
 #include <mutex>
-#include <pcl/common/transforms.h>
-#include <pcl/point_types.h>
-#include <pcl/filters/voxel_grid.h>
+//#include <pcl/common/transforms.h>
+//#include <pcl/point_types.h>
+//#include <pcl/filters/voxel_grid.h>
 #include <random>
 
 namespace ORB_SLAM2
 {
-    typedef pcl::PointXYZRGB PointT;
-    typedef pcl::PointCloud<PointT> PointCloud;
+//    typedef pcl::PointXYZRGB PointT;
+//    typedef pcl::PointCloud<PointT> PointCloud;
 
 //    typedef cv::Vec3f PointT;
 //    typedef std::vector<PointT> PointCloud;
@@ -154,8 +154,7 @@ void MapDrawer::DrawMapPlanes(bool bAssumed) {
         return;
     glPointSize(mPointSize/2);
     glBegin(GL_POINTS);
-    pcl::VoxelGrid<PointT>  voxel;
-    voxel.setLeafSize( 0.01, 0.01, 0.01);
+
     for(auto pMP : vpMPs){
         map<KeyFrame*, int> observations = pMP->GetObservations();
         float ir = pMP->mRed;
@@ -163,7 +162,6 @@ void MapDrawer::DrawMapPlanes(bool bAssumed) {
         float ib = pMP->mBlue;
         float norm = sqrt(ir*ir + ig*ig + ib*ib);
         glColor3f(ir/norm, ig/norm, ib/norm);
-        PointCloud::Ptr allCloudPoints(new PointCloud);
         for(auto mit = observations.begin(), mend = observations.end(); mit != mend; mit++){
             KeyFrame* frame = mit->first;
             int id = mit->second;

@@ -38,7 +38,7 @@ int main()
     string argv[6];
     argv[0] = "";
     argv[1] = "/ORBvoc.txt";
-    argv[2] = "/SP-SLAM/Examples/RGB-D/TUM1.yaml";
+    argv[2] = "/SP-SLAM/Examples/RGB-D/realsense.yaml";
 
     rs2::pipeline pipe;
     rs2::config cfg;

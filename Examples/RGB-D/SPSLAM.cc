@@ -112,7 +112,6 @@ int main()
 #endif
 
         // Pass the image to the SLAM system
-        cout << "111111111111" << imRGB.type() << " " << imD.type() << endl;
         SLAM.TrackRGBD(imRGB,imD,tframe);
 
 #ifdef COMPILEDWITHC11

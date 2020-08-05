@@ -12,9 +12,6 @@
 #define capewrap_cpp
 
 #include <iostream>
-#include <cstdio>
-
-#define _USE_MATH_DEFINES
 
 #include <math.h>
 #include <opencv2/opencv.hpp>
@@ -172,39 +169,6 @@ public:
     }
 
     void _capewrap(std::map<string, float> fSettings){
-        for (int i = 0; i < 100; i++) {
-            cv::Vec3b color;
-            color[0] = rand() % 255;
-            color[1] = rand() % 255;
-            color[2] = rand() % 255;
-            color_code.push_back(color);
-        }
-        // Add specific colors for planes
-        color_code[0][0] = 0;
-        color_code[0][1] = 0;
-        color_code[0][2] = 255;
-        color_code[1][0] = 255;
-        color_code[1][1] = 0;
-        color_code[1][2] = 204;
-        color_code[2][0] = 255;
-        color_code[2][1] = 100;
-        color_code[2][2] = 0;
-        color_code[3][0] = 0;
-        color_code[3][1] = 153;
-        color_code[3][2] = 255;
-        // Add specific colors for cylinders
-        color_code[50][0] = 178;
-        color_code[50][1] = 255;
-        color_code[50][2] = 0;
-        color_code[51][0] = 255;
-        color_code[51][1] = 0;
-        color_code[51][2] = 51;
-        color_code[52][0] = 0;
-        color_code[52][1] = 255;
-        color_code[52][2] = 51;
-        color_code[53][0] = 153;
-        color_code[53][1] = 0;
-        color_code[53][2] = 255;
 
         // Get intrinsics
         fx_ir = fSettings["Camera.fx"];
@@ -232,10 +196,6 @@ public:
         int nr_horizontal_cells = width / PATCH_SIZE;
         int nr_vertical_cells = height / PATCH_SIZE;
 
-        cv::Size s = X_pre.size();
-
-//        cout << "h " << s.height << " w " << s.width << " h1 " << height << " w1 " << width << endl;
-
         for (int r = 0; r < height; r++) {
             for (int c = 0; c < width; c++) {
                 // Not efficient but at this stage doesn t matter
@@ -261,13 +221,8 @@ public:
     }
 
     cape_output process(const cv::Mat &imD) {
-//        rgb_img = imRGB.clone();
         d_img = imD.clone();
-        // Populate with random color codes
 
-        // Initialize CAPE
-
-        // Backproject to point cloud
         X = X_pre.mul(d_img);
         Y = Y_pre.mul(d_img);
         cloud_array.setZero();
@@ -276,14 +231,10 @@ public:
         Y_t = ((float)1.0)*Y;
         d_img = ((float)1.0)*d_img;
 
-        // The following transformation+projection is only necessary to visualize RGB with overlapped segments
-        // Transform point cloud to color reference frame
-
         projectPointCloud(X_t, Y_t, d_img, U, V, fx_rgb, fy_rgb, cx_rgb, cy_rgb, cloud_array);
 
         cv::Mat_<uchar> seg_output = cv::Mat_<uchar>(height, width, uchar(0));
 
-        // Run CAPE
         int nr_planes, nr_cylinders;
         vector<PlaneSeg> plane_params;
         vector<CylinderSeg> cylinder_params;
@@ -293,34 +244,6 @@ public:
         plane_detector->process(cloud_array_organized, nr_planes, nr_cylinders, seg_output, plane_params,
                                 cylinder_params);
         return cape_output(nr_planes, nr_cylinders, seg_output, plane_params, cylinder_params);
-    }
-
-    cv::Mat visualize(cv::Mat rgb_img, cape_output output){
-
-        // Map segments with color codes and overlap segmented image w/ RGB
-        uchar * sCode;
-        uchar * srgb;
-        int code;
-        for(int r=0; r<  height; r++){
-            sCode = output.seg_output.ptr<uchar>(r);
-            srgb = rgb_img.ptr<uchar>(r);
-//            cout << "333" << endl;
-            for(int c=0; c< width; c++){
-                code = *sCode;
-                if (code>0) {
-                    srgb[c * 3] = color_code[code - 1][0] / 2 + srgb[0] / 2;
-                    srgb[c * 3 + 1] = color_code[code - 1][1] / 2 + srgb[1] / 2;
-                    srgb[c * 3 + 2] = color_code[code - 1][2] / 2 + srgb[2] / 2;
-                }
-//                }else{
-//                    srgb[c*3] =  srgb[0];
-//                    srgb[c*3+1] = srgb[1];
-//                    srgb[c*3+2] = srgb[2];
-//                }
-                sCode++; srgb++; srgb++; srgb++;
-            }
-        }
-        return rgb_img;
     }
 
     cv::Mat get_cloud(){

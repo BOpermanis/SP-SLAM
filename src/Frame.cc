@@ -765,21 +765,26 @@ cv::Mat Frame::UnprojectStereo(const int &i)
     }
 
     void Frame::ComputePlanesFromOrganizedPointCloud(const cv::Mat &imDepth, capewrap* cape){
+//        cv::Mat imd;
+//        imDepth.convertTo(imd, CV_32F);
         auto capeout = cape->process(imDepth);
         float ratio;
-        for(uchar i_plane = 0; i_plane<capeout.nr_planes; i_plane++){
 
+        int num_planes = 0;
+        int i_plane;
+        for(uchar c_plane = 1; (int)c_plane<=capeout.nr_planes; c_plane++){
+            i_plane = (int)c_plane - 1;
             cv::Mat coef = cv::Mat_<float>(4,1);
-            coef.at<float>(0) = capeout.plane_params[i_plane].normal[0];
-            coef.at<float>(1) = capeout.plane_params[i_plane].normal[1];
-            coef.at<float>(2) = capeout.plane_params[i_plane].normal[2];
-            coef.at<float>(3) = capeout.plane_params[i_plane].d;
-//            float s = coef.at<float>(0) + coef.at<float>(1) + coef.at<float>(2) + coef.at<float>(3);
+            coef.at<float>(0) = (float)capeout.plane_params[i_plane].normal[0];
+            coef.at<float>(1) = (float)capeout.plane_params[i_plane].normal[1];
+            coef.at<float>(2) = (float)capeout.plane_params[i_plane].normal[2];
+            coef.at<float>(3) = (float)capeout.plane_params[i_plane].d;
             float s = cv::sum(coef)[0];
 
-            if (s > 0 && !std::isinf(s)){
+            if (s != 0 && !std::isinf(s)){
+                num_planes ++;
+                auto mask = plane_mask(capeout.seg_output, c_plane);
 
-                auto mask = plane_mask(capeout.seg_output, i_plane+1);
                 Dilate(mask, mask);
                 Erosion(mask, mask);
                 vector<vector<cv::Point> > contours;
@@ -824,6 +829,7 @@ cv::Mat Frame::UnprojectStereo(const int &i)
                 }
             }
         }
+//        cout << "num planes " << num_planes << endl;
     }
 
     void Frame::GeneratePlanesFromBoundries(const cv::Mat &imDepth) {

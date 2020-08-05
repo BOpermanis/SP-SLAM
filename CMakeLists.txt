@@ -140,16 +140,28 @@ add_executable(test_pcl_plane_extraction
         CAPE/PlaneSeg.cpp
         CAPE/CylinderSeg.cpp
         CAPE/Histogram.cpp
-        CAPE/test_pcl_plane_extraction.cpp)
+        CAPE/test_pcl_plane_extraction.cpp CAPE/cape_on_realsense.cpp)
 target_link_libraries(test_pcl_plane_extraction ${PCL_LIBRARIES} ${OpenCV_LIBS} ${Eigen_LIBRARIES})
 
 #set(realsense2_LIBRARY /librealsense/build/CMakeFiles)
 #set(realsense_INCLUDE_DIR /librealsense/include)
 add_executable(run_realsense Examples/RGB-D/run_realsense.cpp)
 #include_directories(include /librealsense/include)
+target_link_libraries(run_realsense ${PROJECT_NAME})
+
 target_link_libraries(run_realsense
         /librealsense/build/librealsense2.so
         /SP-SLAM/lib/libORB_SLAM2.so
         ${OpenCV_LIBS}
         ${Eigen_LIBRARIES}
         ${Pangolin_LIBRARIES})
+
+
+add_executable(cape_on_realsense CAPE/cape_on_realsense.cpp)
+#include_directories(include /librealsense/include)
+#target_link_libraries(run_realsense /CAPE)
+target_link_libraries(cape_on_realsense
+        /SP-SLAM/lib/libORB_SLAM2.so
+        /librealsense/build/librealsense2.so
+        ${OpenCV_LIBS})
+

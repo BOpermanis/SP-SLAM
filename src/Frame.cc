@@ -801,7 +801,7 @@ cv::Mat Frame::UnprojectStereo(const int &i)
                     }
                 }
                 double rel_area = cv::contourArea(contour0) / (imDepth.cols * imDepth.rows);
-                if (rel_area > 0.05){
+                if (rel_area > 0.01){
                     ratio = 0.1;
                     while (true){
                         double epsilon = ratio*cv::arcLength(contour0,true);
@@ -847,9 +847,7 @@ cv::Mat Frame::UnprojectStereo(const int &i)
                 norm = norm / sqrt(norm[0]*norm[0] + norm[1]*norm[1] + norm[2]*norm[2]);
                 cv::Mat coef = (cv::Mat_<float>(6,1) << pc[0], pc[1], pc[2], norm[0], norm[1], norm[2]);
                 if(LineInRange(pc) && LineInRange(pc1)) {
-                    if(CaculatePlanes(mvPlaneCoefficients[i], coef)) {
-                        mvBoundaryPoints.push_back(PointCloud{pc, pc1});
-                    }
+                    CaculatePlanes(mvPlaneCoefficients[i], coef, pc, pc1);
                 }
             }
         }
@@ -922,7 +920,7 @@ cv::Mat Frame::UnprojectStereo(const int &i)
 }
 
 
-    bool Frame::CaculatePlanes(const cv::Mat &inputplane, const cv::Mat &inputline) {
+    void Frame::CaculatePlanes(const cv::Mat &inputplane, const cv::Mat &inputline, const PointT &pc, const PointT &pc1) {
         //(l,m,n) × (o,p,q) = (mq-np,no-lq,lp-mo)
 
         float a,b,c,d;
@@ -935,31 +933,19 @@ cv::Mat Frame::UnprojectStereo(const int &i)
         cv::Mat coef = (cv::Mat_<float>(4,1) << a/v, b/v, c/v, -d/v);
         if(coef.at<float>(3) < 0)
             coef = -coef;
-
+        PointT norm(inputplane.at<float>(0), inputplane.at<float>(1), inputplane.at<float>(2));
         if(PlaneNotSeen(coef)){
+            PointT delta = pc - pc1;
+            float v1 = sqrt(delta[0] * delta[0] + delta[1] * delta[1] + delta[2] * delta[2]);
 
-            PointCloud cloud;
-            PointT p;
-
-//            for(float i = -0.25; i< 0.25;){
-//                for(float j = -0.25; j < 0.25;){
-//                    p.x = inputline.at<float>(0) + i * inputline.at<float>(3) + j * inputplane.at<float>(0);
-//                    p.y = inputline.at<float>(1) + i * inputline.at<float>(4) + j * inputplane.at<float>(1);
-//                    p.z = (coef.at<float>(0)*p.x + coef.at<float>(1)*p.y + coef.at<float>(3)) / (-coef.at<float>(2));
-//                    p.r = 0;
-//                    p.g = 255;
-//                    p.b = 0;
-//                    cloud.points.push_back(p);
-//                    j = j + 0.01;
-//                }
-//                i = i + 0.01;
-//            }
-
+            PointCloud borders;
+            borders.push_back(pc + norm * v1 / 2);
+            borders.push_back(pc1 + norm * v1 / 2);
+            borders.push_back(pc - norm * v1 / 2);
+            borders.push_back(pc1 - norm * v1 / 2);
+            mvBoundaryPoints.push_back(borders);
             mvPlaneCoefficients.push_back(coef);
-//            mvPlanePoints.push_back(cloud);
-            return true;
         }
-        return false;
 }
 
     bool Frame::PlaneNotSeen(const cv::Mat &coef) {

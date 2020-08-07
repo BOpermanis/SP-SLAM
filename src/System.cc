@@ -522,4 +522,39 @@ vector<cv::KeyPoint> System::GetTrackedKeyPointsUn()
     return mTrackedKeyPointsUn;
 }
 
+    void System::PrepareDump(){
+
+        mp_3dpts.deallocate();
+        plane_ids_from_boundary_pts.deallocate();
+        kf_ids_from_mps.deallocate();
+        kf_3dpts.deallocate();
+        kf_ids.deallocate();
+        plane_params.deallocate();
+        plane_ids.deallocate();
+        plane_boundary_pts.deallocate();
+
+        for(auto it: mpMap->GetAllMapPoints()){
+            cv::Vec3f vec = it->GetWorldPos();
+            mp_3dpts.push_back(vec);
+            kf_ids_from_mps.push_back(it->GetReferenceKeyFrame()->mnId);
+        }
+
+        for(auto it: mpMap->GetAllKeyFrames()){
+
+            cv::Vec3f vec = it->GetTranslation();
+            long unsigned int id_kf = it->mnId;
+
+            kf_3dpts.push_back(vec);
+            kf_ids.push_back(id_kf);
+        }
+
+        for (auto it: mpMap->GetAllMapPlanes()){
+            plane_params.push_back(it->GetWorldPos());
+            plane_ids.push_back(it->mnId);
+            for(auto &pt: it->mvBoundaryPoints){
+                plane_boundary_pts.push_back(pt);
+                plane_ids_from_boundary_pts.push_back(it->mnId);
+            }
+        }
+    }
 } //namespace ORB_SLAM

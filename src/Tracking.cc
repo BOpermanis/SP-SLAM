@@ -38,7 +38,7 @@
 
 #include<mutex>
 #include <unistd.h>
-#include <Timer.h>
+//#include <Timer.h>
 using namespace std;
 
 namespace ORB_SLAM2
@@ -247,7 +247,7 @@ cv::Mat Tracking::GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, const d
 
     std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
     double tt = std::chrono::duration_cast<std::chrono::duration<double> >(t2 - t1).count();
-    ORB_SLAM2::Timer::SetTTrack(tt);
+//    ORB_SLAM2::Timer::SetTTrack(tt);
 
     return mCurrentFrame.mTcw.clone();
 }
@@ -1321,7 +1321,7 @@ void Tracking::CreateNewKeyFrame()
         }
 
 
-        ORB_SLAM2::Timer::SetPlaneLMNum(mpMap->MapPlanesInMap());
+//        ORB_SLAM2::Timer::SetPlaneLMNum(mpMap->MapPlanesInMap());
 
         // We sort points by the measured depth by the stereo/RGBD sensor.
         // We create all those MapPoints whose depth < mThDepth.

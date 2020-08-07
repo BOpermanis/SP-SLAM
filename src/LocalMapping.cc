@@ -24,7 +24,7 @@
 #include "Optimizer.h"
 
 #include<mutex>
-#include <Timer.h>
+//#include <Timer.h>
 #include <unistd.h>
 namespace ORB_SLAM2
 {
@@ -87,7 +87,7 @@ void LocalMapping::Run()
 
                     std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
                     double tt = std::chrono::duration_cast<std::chrono::duration<double> >(t2 - t1).count();
-                    ORB_SLAM2::Timer::SetTLocalBA(tt);
+//                    ORB_SLAM2::Timer::SetTLocalBA(tt);
                 }
                 // Check redundant local Keyframes
                 KeyFrameCulling();

@@ -27,7 +27,7 @@
 #include <System.h>
 #include <Config.h>
 #include <unistd.h>
-#include <Timer.h>
+//#include <Timer.h>
 #include <librealsense2/rs.hpp> // Include RealSense Cross Platform API
 using namespace std;
 
@@ -47,9 +47,9 @@ int main()
     pipe.start(cfg);
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
-    ORB_SLAM2::Config::SetParameterFile(argv[2]);
+//    ORB_SLAM2::Config::SetParameterFile(argv[2]);
     ORB_SLAM2::System SLAM(argv[1],argv[2],ORB_SLAM2::System::RGBD,true);
-    ORB_SLAM2::Timer::StartTimer(7);
+//    ORB_SLAM2::Timer::StartTimer(7);
 
     // Main loop
     cv::Mat imRGB, imD;
@@ -66,7 +66,7 @@ int main()
 
         std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
         auto tstamp = std::chrono::duration<double>(now - start).count();
-        SLAM.TrackRGBD(image_rgb, image_depth,tstamp);
+        SLAM.TrackRGBD(image_rgb, image_depth, tstamp);
     }
 
     // Stop all threads

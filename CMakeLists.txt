@@ -103,8 +103,7 @@ add_library(${PROJECT_NAME} SHARED
         CAPE/Params.h
         CAPE/PlaneSeg.cpp
         CAPE/PlaneSeg.h
-           include/Timer.h
-           src/Timer.cc Examples/slam_zero_run.cpp)
+        Examples/slam_zero_run.cpp)
 
 target_link_libraries(${PROJECT_NAME}
 ${OpenCV_LIBS}
@@ -134,14 +133,14 @@ add_executable(cape_offline CAPE/run_cape_offline.cpp
 
 target_link_libraries(cape_offline ${OpenCV_LIBS} ${Eigen_LIBRARIES})
 
-add_executable(test_pcl_plane_extraction
-        CAPE/CAPE.cpp
-        CAPE/frame.cpp
-        CAPE/PlaneSeg.cpp
-        CAPE/CylinderSeg.cpp
-        CAPE/Histogram.cpp
-        CAPE/test_pcl_plane_extraction.cpp CAPE/cape_on_realsense.cpp)
-target_link_libraries(test_pcl_plane_extraction ${PCL_LIBRARIES} ${OpenCV_LIBS} ${Eigen_LIBRARIES})
+#add_executable(test_pcl_plane_extraction
+#        CAPE/CAPE.cpp
+#        CAPE/frame.cpp
+#        CAPE/PlaneSeg.cpp
+#        CAPE/CylinderSeg.cpp
+#        CAPE/Histogram.cpp
+#        CAPE/test_pcl_plane_extraction.cpp CAPE/cape_on_realsense.cpp)
+#target_link_libraries(test_pcl_plane_extraction ${PCL_LIBRARIES} ${OpenCV_LIBS} ${Eigen_LIBRARIES})
 
 #set(realsense2_LIBRARY /librealsense/build/CMakeFiles)
 #set(realsense_INCLUDE_DIR /librealsense/include)

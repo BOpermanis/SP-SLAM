@@ -126,6 +126,16 @@ public:
     std::vector<MapPoint*> GetTrackedMapPoints();
     std::vector<cv::KeyPoint> GetTrackedKeyPointsUn();
 
+    void PrepareDump();
+    cv::Mat dump_kf_ids_from_mps(){return kf_ids_from_mps;}
+    cv::Mat dump_kf_ids(){return kf_ids;}
+    cv::Mat dump_mp_3dpts(){return mp_3dpts;}
+    cv::Mat dump_kf_3dpts(){return kf_3dpts;}
+    cv::Mat dump_plane_ids(){return plane_ids;}
+    cv::Mat dump_plane_ids_from_boundary_pts(){return plane_ids_from_boundary_pts;}
+    cv::Mat dump_plane_params(){return plane_params;}
+    cv::Mat dump_boundary_pts(){return plane_boundary_pts;}
+
 private:
 
     // Input sensor
@@ -178,6 +188,18 @@ private:
     std::vector<MapPoint*> mTrackedMapPoints;
     std::vector<cv::KeyPoint> mTrackedKeyPointsUn;
     std::mutex mMutexState;
+
+    // stuff for export
+    cv::Mat kf_ids_from_mps;
+    cv::Mat kf_ids;
+    cv::Mat plane_ids;
+
+    cv::Mat mp_3dpts;
+    cv::Mat kf_3dpts;
+
+    cv::Mat plane_ids_from_boundary_pts;
+    cv::Mat plane_params;
+    cv::Mat plane_boundary_pts;
 
     // point cloud mapping
 //    shared_ptr<PointCloudMapping>  mpPointCloudMapping;

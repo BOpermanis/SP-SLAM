@@ -36,7 +36,7 @@
 #include<opencv2/core/core.hpp>
 
 #include<System.h>
-#include <Timer.h>
+//#include <Timer.h>
 using namespace std;
 
 int main()
@@ -51,7 +51,7 @@ int main()
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
     ORB_SLAM2::System SLAM("/ORBvoc.txt","/slamdoom/tmp/orbslam2/Examples/RGB-D/TUM1.yaml",ORB_SLAM2::System::RGBD,true);
-    ORB_SLAM2::Timer::StartTimer(nImages);
+//    ORB_SLAM2::Timer::StartTimer(nImages);
 
     // Vector for tracking time statistics
     vector<float> vTimesTrack;

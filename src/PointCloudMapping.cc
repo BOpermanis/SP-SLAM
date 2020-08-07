@@ -19,9 +19,9 @@
 
 #include "PointCloudMapping.h"
 #include <KeyFrame.h>
-#include <opencv2/highgui/highgui.hpp>
-#include "Converter.h"
-#include "Config.h"
+//#include <opencv2/highgui/highgui.hpp>
+//#include "Converter.h"
+//#include "Config.h"
 namespace ORB_SLAM2 {
     PointCloudMapping::PointCloudMapping(Map *map): mpMap(map) {
 

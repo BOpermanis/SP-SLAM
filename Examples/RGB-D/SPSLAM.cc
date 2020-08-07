@@ -21,7 +21,6 @@
 
 #include<iostream>
 #include<algorithm>
-#include<fstream>
 #include<chrono>
 
 #include<opencv2/core/core.hpp>
@@ -29,7 +28,6 @@
 #include <System.h>
 #include <Config.h>
 #include <unistd.h>
-#include <Timer.h>
 using namespace std;
 
 void LoadImages(const string &strAssociationFilename, const string &strAssociationFilename2, vector<string> &vstrImageFilenamesRGB,
@@ -75,7 +73,7 @@ int main()
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
     ORB_SLAM2::Config::SetParameterFile(argv[2]);
     ORB_SLAM2::System SLAM(argv[1],argv[2],ORB_SLAM2::System::RGBD,true);
-    ORB_SLAM2::Timer::StartTimer(nImages);
+//    ORB_SLAM2::Timer::StartTimer(nImages);
 
     // Vector for tracking time statistics
     vector<float> vTimesTrack;
@@ -157,35 +155,13 @@ int main()
     cout << "median tracking time: " << vTimesTrack[nImages/2] << endl;
     cout << "mean tracking time: " << totaltime/nImages << endl;
 
-    cout << "-------" << endl << endl;
-    cout << "mean plane time: " << ORB_SLAM2::Timer::GetAveTPlane() << endl;
-    cout << "-------" << endl << endl;
-    cout << "mean supposing time: " << ORB_SLAM2::Timer::GetAveTSPlane() << endl;
-    cout << "-------" << endl << endl;
-    cout << "mean tracking time: " << ORB_SLAM2::Timer::GetAveTTrack() << endl;
-    cout << "-------" << endl << endl;
-    cout << "mean local BA time: " << ORB_SLAM2::Timer::GetAveTLocalBA() << endl;
-    // Save camera trajectory
 
-    double planenum = (double)ORB_SLAM2::Timer::GetPlaneNum();
-    double splanenum = (double)ORB_SLAM2::Timer::GetSPlaneNum();
-    double allplanenum = (double)ORB_SLAM2::Timer::GetAllPlaneNum();
-
-    cout << "----------------------" << endl << endl << endl;
-    cout << "Plane LandMark num: " << ORB_SLAM2::Timer::GetPlaneLMNum() << endl;
-    cout << "-------" << endl << endl;
-    cout << "Total Plane num " << planenum << " ... Ave: " << planenum/nImages << endl;
-    cout << "-------" << endl << endl;
-    cout << "Total Supposed Plane num " << splanenum << " ... Ave: " << splanenum/nImages << endl;
-    cout << "-------" << endl << endl;
-    cout << "Total Plane num " << allplanenum << " ... Ave: " << allplanenum/nImages << endl;
-
-    string FramePath = ORB_SLAM2::Config::Get<string>("SavePath.Frame");
-    string KeyframePath = ORB_SLAM2::Config::Get<string>("SavePath.Keyframe");
-    string PlanePath = ORB_SLAM2::Config::Get<string>("SavePath.PlaneFeature");
-    SLAM.SaveTrajectoryTUM(FramePath);
-    SLAM.SaveKeyFrameTrajectoryTUM(KeyframePath);
-    SLAM.SavePlaneFeatures(PlanePath);
+//    string FramePath = ORB_SLAM2::Config::Get<string>("SavePath.Frame");
+//    string KeyframePath = ORB_SLAM2::Config::Get<string>("SavePath.Keyframe");
+//    string PlanePath = ORB_SLAM2::Config::Get<string>("SavePath.PlaneFeature");
+//    SLAM.SaveTrajectoryTUM(FramePath);
+//    SLAM.SaveKeyFrameTrajectoryTUM(KeyframePath);
+//    SLAM.SavePlaneFeatures(PlanePath);
     return 0;
 }
 

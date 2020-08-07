@@ -24,7 +24,7 @@
 #include "capewrap.cpp"
 
 #include <thread>
-#include <Timer.h>
+//#include <Timer.h>
 #include <boost/make_shared.hpp>
 
 namespace ORB_SLAM2
@@ -188,22 +188,22 @@ Frame::Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const double &timeSt
     ComputePlanesFromOrganizedPointCloud(imDepth, cape);
 //    mnRealPlaneNum = mvPlanePoints.size();
     mnRealPlaneNum = mvBoundaryPoints.size();
-    ORB_SLAM2::Timer::AddPlane(mnRealPlaneNum);
+//    ORB_SLAM2::Timer::AddPlane(mnRealPlaneNum);
 
     std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
     double tt= std::chrono::duration_cast<std::chrono::duration<double> >(t2 - t1).count();
-    ORB_SLAM2::Timer::SetTPlane(tt);
+//    ORB_SLAM2::Timer::SetTPlane(tt);
 
     // generate supposed planes from boundaries ?
     GeneratePlanesFromBoundries(imDepth);
     std::chrono::steady_clock::time_point t3 = std::chrono::steady_clock::now();
     double tt2= std::chrono::duration_cast<std::chrono::duration<double> >(t3 - t2).count();
-    ORB_SLAM2::Timer::SetTSPlane(tt2);
+//    ORB_SLAM2::Timer::SetTSPlane(tt2);
 
 //    mnPlaneNum = mvPlanePoints.size();
     mnPlaneNum = mvBoundaryPoints.size();
 
-    ORB_SLAM2::Timer::AddSPlane(mnPlaneNum - mnRealPlaneNum);
+//    ORB_SLAM2::Timer::AddSPlane(mnPlaneNum - mnRealPlaneNum);
 
     mvpMapPlanes = vector<MapPlane*>(mnPlaneNum,static_cast<MapPlane*>(nullptr));
     mvpParallelPlanes = vector<MapPlane*>(mnPlaneNum,static_cast<MapPlane*>(nullptr));
@@ -801,8 +801,8 @@ cv::Mat Frame::UnprojectStereo(const int &i)
                     }
                 }
                 double rel_area = cv::contourArea(contour0) / (imDepth.cols * imDepth.rows);
-                if (rel_area > 0.01){
-                    ratio = 0.1;
+                if (rel_area > 0.1){
+                    ratio = 0.8;
                     while (true){
                         double epsilon = ratio*cv::arcLength(contour0,true);
                         cv::approxPolyDP(contour0, border, epsilon, false);

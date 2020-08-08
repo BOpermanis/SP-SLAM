@@ -532,6 +532,7 @@ vector<cv::KeyPoint> System::GetTrackedKeyPointsUn()
         plane_params.deallocate();
         plane_ids.deallocate();
         plane_boundary_pts.deallocate();
+        cntBoundaryUpdateSizes.deallocate();
 
         for(auto it: mpMap->GetAllMapPoints()){
             cv::Vec3f vec = it->GetWorldPos();
@@ -551,6 +552,10 @@ vector<cv::KeyPoint> System::GetTrackedKeyPointsUn()
         for (auto it: mpMap->GetAllMapPlanes()){
             plane_params.push_back(it->GetWorldPos());
             plane_ids.push_back(it->mnId);
+
+            for(int cnt: it->cntBoundaryUpdateSizes)
+                cntBoundaryUpdateSizes.push_back(cv::Vec2i(it->mnId, cnt));
+
             for(auto &pt: it->mvBoundaryPoints){
                 plane_boundary_pts.push_back(pt);
                 plane_ids_from_boundary_pts.push_back(it->mnId);

@@ -768,7 +768,6 @@ cv::Mat Frame::UnprojectStereo(const int &i)
 //        cv::Mat imd;
 //        imDepth.convertTo(imd, CV_32F);
         auto capeout = cape->process(imDepth);
-        float ratio;
 
         int num_planes = 0;
         int i_plane;
@@ -802,12 +801,12 @@ cv::Mat Frame::UnprojectStereo(const int &i)
                 }
                 double rel_area = cv::contourArea(contour0) / (imDepth.cols * imDepth.rows);
                 if (rel_area > 0.1){
-                    ratio = 0.8;
+                    double epsilon = 0.01 * cv::arcLength(contour0,true);
                     while (true){
-                        double epsilon = ratio*cv::arcLength(contour0,true);
                         cv::approxPolyDP(contour0, border, epsilon, false);
-                        if(border.size() > 2) break;
-                        ratio *= 0.7;
+                        if(border.size() > 3) break;
+                        border.clear();
+                        epsilon *= 0.7;
                     }
 
                     if(coef.at<float>(3) < 0) {
@@ -837,7 +836,23 @@ cv::Mat Frame::UnprojectStereo(const int &i)
         for(int i=iend; i >= 0; --i){
             PointCloud boundPoints = mvBoundaryPoints[i];
             int boundSize = boundPoints.size();
+            cv::Mat all_norms;
+            for (int k=0; k<boundSize; k++) {
+                int k1 = k + 1;
+                if (k1 == boundSize) k1 = 0;
+                PointT pc = boundPoints[k];
+                PointT pc1 = boundPoints[k1];
+                PointT norm = pc1 - pc;
+                all_norms.push_back(sqrt(norm[0]*norm[0] + norm[1]*norm[1] + norm[2]*norm[2]));
+            }
+
+            float s = cv::sum(all_norms)[0];
+            if (s == 0) return;
+
+            all_norms /= s;
+
             for (int k=0; k<boundSize; k++){
+                if (all_norms.at<float>(k) < 0.1) continue;
                 int k1 = k + 1;
                 if (k1 == boundSize) k1 = 0;
                 PointT pc = boundPoints[k];

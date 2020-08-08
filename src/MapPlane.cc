@@ -45,9 +45,11 @@ namespace ORB_SLAM2{
 //        auto T1 = T.inverse().matrix();
         auto T = pRefKF->GetPose().inv();
         if (s) {
+            cntBoundaryUpdateSizes.push_back(pRefKF->mvBoundaryPoints[idx].size());
             Transformation(pRefKF->mvBoundaryPoints[idx], mvBoundaryPoints, T);
             AddObservation(pRefKF, idx);
         } else {
+            cntBoundaryUpdateSizes.push_back(pRefKF->mvNotSeenBoundaryPoints[idx].size());
             Transformation(pRefKF->mvNotSeenBoundaryPoints[idx], mvBoundaryPoints, T);
             AddNotSeenObservation(pRefKF, idx);
         }
@@ -165,6 +167,7 @@ namespace ORB_SLAM2{
     }
 
     void MapPlane::UpdateBoundary(const ORB_SLAM2::Frame &pF, int id) {
+        cntBoundaryUpdateSizes.push_back(pF.mvBoundaryPoints[id].size());
         Transformation(pF.mvBoundaryPoints[id], mvBoundaryPoints, pF.mTcw.inv());
 //        Eigen::Isometry3d T = ORB_SLAM2::Converter::toSE3Quat( pF.mTcw );
 //        pcl::transformPointCloud( pF.mvBoundaryPoints[id], *mvBoundaryPoints, T.inverse().matrix());

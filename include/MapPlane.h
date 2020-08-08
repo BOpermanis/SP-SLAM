@@ -64,6 +64,7 @@ namespace ORB_SLAM2 {
         long unsigned int mnLoopPointForKF; //used by loop closing
         long unsigned int mnBAGlobalForKF;
         PointCloud mvBoundaryPoints;
+        std::vector<int> cntBoundaryUpdateSizes;
         bool mbSeen;
         cv::Mat mPosGBA;
         //used for visualization

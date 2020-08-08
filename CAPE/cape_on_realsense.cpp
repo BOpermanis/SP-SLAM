@@ -33,6 +33,10 @@
 
 #include "CAPE/capewrap.cpp"
 
+
+typedef cv::Vec3f PointT;
+typedef std::vector<PointT> PointCloud;
+
 cv::Mat plane_mask(const cv::Mat &seg, uchar i_plane){
     cv::Mat mask = cv::Mat::zeros(seg.rows, seg.cols, CV_8U);
     for(int i=0; i<seg.rows; i++)
@@ -45,6 +49,83 @@ cv::Mat plane_mask(const cv::Mat &seg, uchar i_plane){
         }
     }
     return mask;
+}
+
+void Erosion( cv::Mat &src, cv::Mat &erosion_dst)
+{
+    int erosion_size = 10;
+    cv::Mat element = getStructuringElement( cv::MORPH_RECT,
+                                             cv::Size( 2*erosion_size + 1, 2*erosion_size+1 ), cv::Point( erosion_size, erosion_size ) );
+    cv::erode( src, erosion_dst, element );
+//    imshow( "Erosion Demo", erosion_dst );
+}
+
+void Dilate( cv::Mat &src, cv::Mat &dilation_dst)
+{
+    int dilation_size = 10;
+
+    cv::Mat element = getStructuringElement( cv::MORPH_RECT,
+                                             cv::Size( 2*dilation_size + 1, 2*dilation_size+1 ),
+                                             cv::Point( dilation_size, dilation_size ) );
+    cv::dilate( src, dilation_dst, element );
+}
+
+
+bool extract_border_points(uchar c_plane, PointCloud &boundaryPoints, cv::Mat &coef, vector<cv::Point> &border, const cape_output &capeout, const capewrap &cape, const cv::Mat &imDepth){
+    int i_plane = (int)c_plane - 1;
+
+    coef.at<float>(0) = (float)capeout.plane_params[i_plane].normal[0];
+    coef.at<float>(1) = (float)capeout.plane_params[i_plane].normal[1];
+    coef.at<float>(2) = (float)capeout.plane_params[i_plane].normal[2];
+    coef.at<float>(3) = (float)capeout.plane_params[i_plane].d;
+    float s = cv::sum(coef)[0];
+    bool flag_ok = false;
+
+    if (s != 0 && !std::isinf(s)){
+        auto mask = plane_mask(capeout.seg_output, c_plane);
+
+        Dilate(mask, mask);
+        Erosion(mask, mask);
+        vector<vector<cv::Point> > contours;
+        vector<cv::Point> contour0;
+        vector<cv::Vec4i> hierarchy;
+        cv::findContours(mask, contours, hierarchy, -1, 2);
+
+        int maxlen = 0;
+        for(auto &cnt: contours){
+            if (cnt.size() > maxlen){
+                contour0 = cnt;
+                maxlen = cnt.size();
+            }
+        }
+        double rel_area = cv::contourArea(contour0) / (imDepth.cols * imDepth.rows);
+        if (rel_area > 0.1){
+            double epsilon = 0.01 * cv::arcLength(contour0,true);
+            while (true){
+                cv::approxPolyDP(contour0, border, epsilon, false);
+                if(border.size() > 3) break;
+                border.clear();
+                epsilon *= 0.7;
+            }
+
+            if(coef.at<float>(3) < 0) {
+                coef = -coef;
+            }
+            for(auto &pt: border){
+
+                float y = (pt.y - cape.cy_ir) / cape.fy_ir;
+                float x = (pt.x - cape.cx_ir) / cape.fx_ir;
+
+                float theta = - coef.at<float>(3) / (x * coef.at<float>(0) + y * coef.at<float>(1) + coef.at<float>(2));
+
+                boundaryPoints.push_back(PointT(x * theta, y * theta, theta));
+            }
+//            mvBoundaryPoints.push_back(boundaryPoints);
+//            mvPlaneCoefficients.push_back(coef);
+            flag_ok = true;
+        }
+    }
+    return flag_ok;
 }
 
 using namespace std;
@@ -127,11 +208,28 @@ int main()
 
         auto mask = plane_mask(plane_extracts.seg_output, 1);
 
-        float s = cv::sum(mask)[0];
-        float s1 = plane_extracts.plane_params[0].normal[0] + plane_extracts.plane_params[0].normal[1] + plane_extracts.plane_params[0].normal[2] + plane_extracts.plane_params[0].d;
-        cout << plane_extracts.nr_planes << " " << s << " " << s1 << endl;
+//        float s = cv::sum(mask)[0];
+//        float s1 = plane_extracts.plane_params[0].normal[0] + plane_extracts.plane_params[0].normal[1] + plane_extracts.plane_params[0].normal[2] + plane_extracts.plane_params[0].d;
+//        cout << plane_extracts.nr_planes << " " << s << " " << s1 << endl;
 //        imshow( "Display window", seg_rz );
-        imshow( "Display window", mask * 255 );
+        mask *= 255;
+        cv::cvtColor(mask, mask, cv::COLOR_GRAY2BGR);
+        for(uchar c_plane = 1; (int)c_plane<=plane_extracts.nr_planes; c_plane++){
+            cv::Mat coef = cv::Mat_<float>(4,1);
+            PointCloud boundaryPoints;
+            vector<cv::Point> border;
+            if (extract_border_points(c_plane, boundaryPoints, coef, border, plane_extracts, cape, image_depth)){
+//            boundaryPoints.push_back(PointT(boundaryPoints[0]));
+                cv::Scalar color( 0, 255, 0 );
+//                border.push_back(border[0]);
+                cout << border[0] << " " << border[border.size()-1] << endl;
+                vector<vector<cv::Point> > contours111;
+                contours111.push_back(border);
+                cv::drawContours( mask, contours111, 0, color, 2, 8);
+            }
+        }
+
+        imshow( "Display window",  mask);
 
         // Press  ESC on keyboard to  exit
         char c = (char) cv::waitKey(1);

@@ -135,6 +135,8 @@ public:
     cv::Mat dump_plane_ids_from_boundary_pts(){return plane_ids_from_boundary_pts;}
     cv::Mat dump_plane_params(){return plane_params;}
     cv::Mat dump_boundary_pts(){return plane_boundary_pts;}
+    cv::Mat dump_cntBoundaryUpdateSizes(){return cntBoundaryUpdateSizes;}
+
 
 private:
 
@@ -200,7 +202,7 @@ private:
     cv::Mat plane_ids_from_boundary_pts;
     cv::Mat plane_params;
     cv::Mat plane_boundary_pts;
-
+    cv::Mat cntBoundaryUpdateSizes;
     // point cloud mapping
 //    shared_ptr<PointCloudMapping>  mpPointCloudMapping;
 };

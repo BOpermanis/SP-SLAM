@@ -524,15 +524,15 @@ vector<cv::KeyPoint> System::GetTrackedKeyPointsUn()
 
     void System::PrepareDump(){
 
-        mp_3dpts.deallocate();
-        plane_ids_from_boundary_pts.deallocate();
-        kf_ids_from_mps.deallocate();
-        kf_3dpts.deallocate();
-        kf_ids.deallocate();
-        plane_params.deallocate();
-        plane_ids.deallocate();
-        plane_boundary_pts.deallocate();
-        cntBoundaryUpdateSizes.deallocate();
+        mp_3dpts.release();
+        plane_ids_from_boundary_pts.release();
+        kf_ids_from_mps.release();
+        kf_3dpts.release();
+        kf_ids.release();
+        plane_params.release();
+        plane_ids.release();
+        plane_boundary_pts.release();
+        cntBoundaryUpdateSizes.release();
 
         for(auto it: mpMap->GetAllMapPoints()){
             cv::Vec3f vec = it->GetWorldPos();

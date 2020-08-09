@@ -53,6 +53,7 @@ ${PROJECT_SOURCE_DIR}/include
         ${PROJECT_SOURCE_DIR}/CAPE
         ${EIGEN3_INCLUDE_DIR}
 ${Pangolin_INCLUDE_DIRS}
+        ${PROJECT_SOURCE_DIR}/grid_map_core/include
         /librealsense/include
 #        ${PCL_INCLUDE_DIRS}
 #${G2O_INCLUDE_DIRS}
@@ -111,7 +112,8 @@ ${EIGEN3_LIBS}
 ${Pangolin_LIBRARIES}
 ${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/libDBoW2.so
 ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
-#        ${PCL_LIBRARIES}
+        ${PROJECT_SOURCE_DIR}/grid_map_core/lib/libgrid_map_core.so
+        #        ${PCL_LIBRARIES}
 )
 
 # Build examples
@@ -122,7 +124,7 @@ add_executable(SPSLAM
 target_link_libraries(SPSLAM ${PROJECT_NAME})
 
 add_executable(slam_zero_run
-        Examples/slam_zero_run.cpp)
+        Examples/slam_zero_run.cpp Examples/gridmap_example.cpp)
 target_link_libraries(slam_zero_run ${PROJECT_NAME})
 
 add_executable(cape_offline CAPE/run_cape_offline.cpp
@@ -164,3 +166,6 @@ target_link_libraries(cape_on_realsense
         /librealsense/build/librealsense2.so
         ${OpenCV_LIBS})
 
+add_executable(gridmap_experiment Examples/gridmap_example.cpp)
+target_link_libraries(gridmap_experiment
+        /SP-SLAM/grid_map_core/lib/libgrid_map_core.so)

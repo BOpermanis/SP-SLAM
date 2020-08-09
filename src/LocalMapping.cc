@@ -22,6 +22,7 @@
 #include "LoopClosing.h"
 #include "ORBmatcher.h"
 #include "Optimizer.h"
+#include "grid_map_core/GridMap.hpp"
 
 #include<mutex>
 //#include <Timer.h>
@@ -50,7 +51,7 @@ void LocalMapping::Run()
 
     mbFinished = false;
 
-    while(1)
+    while(true)
     {
         // Tracking will see that Local Mapping is busy
         SetAcceptKeyFrames(false);
@@ -109,7 +110,7 @@ void LocalMapping::Run()
                 break;
         }
 
-
+        MaintainMapPlanes();
 
         ResetIfRequested();
 
@@ -772,6 +773,12 @@ bool LocalMapping::isFinished()
 {
     unique_lock<mutex> lock(mMutexFinish);
     return mbFinished;
+}
+
+void LocalMapping::MaintainMapPlanes(){
+    for(auto plane: mpMap->GetAllMapPlanes()){
+//        Gri
+    }
 }
 
 } //namespace ORB_SLAM

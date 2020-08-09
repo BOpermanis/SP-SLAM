@@ -67,6 +67,8 @@ public:
     void RequestFinish();
     bool isFinished();
 
+    void MaintainMapPlanes();
+
     int KeyframesInQueue(){
         unique_lock<std::mutex> lock(mMutexNewKFs);
         return mlNewKeyFrames.size();

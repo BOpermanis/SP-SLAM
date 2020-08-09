@@ -194,8 +194,8 @@ Frame::Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const double &timeSt
     double tt= std::chrono::duration_cast<std::chrono::duration<double> >(t2 - t1).count();
 //    ORB_SLAM2::Timer::SetTPlane(tt);
 
-    // generate supposed planes from boundaries ?
-    GeneratePlanesFromBoundries(imDepth);
+    // TODO generate suposed planes
+//    GeneratePlanesFromBoundries(imDepth);
     std::chrono::steady_clock::time_point t3 = std::chrono::steady_clock::now();
     double tt2= std::chrono::duration_cast<std::chrono::duration<double> >(t3 - t2).count();
 //    ORB_SLAM2::Timer::SetTSPlane(tt2);
@@ -765,8 +765,6 @@ cv::Mat Frame::UnprojectStereo(const int &i)
     }
 
     void Frame::ComputePlanesFromOrganizedPointCloud(const cv::Mat &imDepth, capewrap* cape){
-//        cv::Mat imd;
-//        imDepth.convertTo(imd, CV_32F);
         auto capeout = cape->process(imDepth);
 
         int num_planes = 0;
@@ -801,18 +799,18 @@ cv::Mat Frame::UnprojectStereo(const int &i)
                 }
                 double rel_area = cv::contourArea(contour0) / (imDepth.cols * imDepth.rows);
                 if (rel_area > 0.1){
-                    double epsilon = 0.01 * cv::arcLength(contour0,true);
-                    while (true){
-                        cv::approxPolyDP(contour0, border, epsilon, false);
-                        if(border.size() > 3) break;
-                        border.clear();
-                        epsilon *= 0.7;
-                    }
+//                    double epsilon = 0.01 * cv::arcLength(contour0,true);
+//                    while (true){
+//                        cv::approxPolyDP(contour0, border, epsilon, false);
+//                        if(border.size() > 3) break;
+//                        border.clear();
+//                        epsilon *= 0.7;
+//                    }
 
                     if(coef.at<float>(3) < 0) {
                         coef = -coef;
                     }
-
+                    border = contour0;
                     PointCloud boundaryPoints;
                     for(auto &pt: border){
 

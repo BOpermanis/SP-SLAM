@@ -109,6 +109,8 @@ void LocalMapping::Run()
                 break;
         }
 
+
+
         ResetIfRequested();
 
         // Tracking will see that Local Mapping is busy

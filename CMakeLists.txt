@@ -168,4 +168,4 @@ target_link_libraries(cape_on_realsense
 
 add_executable(gridmap_experiment Examples/gridmap_example.cpp)
 target_link_libraries(gridmap_experiment
-        /SP-SLAM/grid_map_core/lib/libgrid_map_core.so)
+        /SP-SLAM/grid_map_core/lib/libgrid_map_core.so ${OpenCV_LIBS})

@@ -40,6 +40,7 @@ namespace ORB_SLAM2{
         mRed = rand() % 255;
         mBlue = rand() % 255;
         mGreen = rand() % 255;
+        gridmap.setGeometry(grid_map::Length(30.0, 30.0), 0.01, grid_map::Position(0.0, 0.0));
 
 //        Eigen::Isometry3d T = ORB_SLAM2::Converter::toSE3Quat(pRefKF->GetPose());
 //        auto T1 = T.inverse().matrix();
@@ -223,5 +224,23 @@ namespace ORB_SLAM2{
     {
         unique_lock<mutex> lock(mMutexFeatures);
         return mpRefKF;
+    }
+    void MapPlane::AddBoundary(PointCloud &cloud)
+    {
+        auto coef = GetWorldPos();
+        PointT plane_norm(coef.at<float>(0), coef.at<float>(1), coef.at<float>(2));
+        auto v = - coef.at<float>(3) / (coef.at<float>(0)*coef.at<float>(0) + coef.at<float>(1) * coef.at<float>(1) + coef.at<float>(2)* coef.at<float>(2));
+
+        auto pt0 = v * plane_norm;
+        float dist;
+        PointT a;
+        unique_lock<mutex> lock(mMutexGridMap);
+        grid_map::Polygon polygon;
+        for(auto &pt: cloud){
+            a = pt0 - pt;
+            dist = plane_norm[0] * a[0] + plane_norm[1] * a[1] + plane_norm[2] * a[2];
+            plane_norm * dist + pt;
+
+        }
     }
 }

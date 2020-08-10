@@ -33,26 +33,38 @@ endif()
 ## Define Eigen addons.
 include(cmake/${PROJECT_NAME}-extras.cmake)
 
-## System dependencies are found with CMake's conventions
-#find_package(Eigen3 REQUIRED)
-# Solution to find Eigen3 with Saucy.
-#find_package(Eigen3 QUIET)
-#if(NOT EIGEN3_FOUND)
-#  find_package(PkgConfig REQUIRED)
-#  pkg_check_modules(EIGEN3 REQUIRED eigen3)
-#  set(EIGEN3_INCLUDE_DIR ${EIGEN3_INCLUDE_DIRS})
-#endif()
+
 set(EIGEN3_INCLUDE_DIR /eigen-3.3.7)
 set(Eigen3_FIND_VERSION "${Eigen3_FIND_VERSION_MAJOR}.${Eigen3_FIND_VERSION_MINOR}.${Eigen3_FIND_VERSION_PATCH}")
 
-#find_package(OpenCV 3.0 QUIET)
-#if(NOT OpenCV_FOUND)
-#    #   message(FATAL_ERROR "OpenCV not found.")
-#    find_package(OpenCV 2.4.3 QUIET)
-#    if(NOT OpenCV_FOUND)
-#        message(FATAL_ERROR "OpenCV > 2.4.3 not found.")
-#    endif()
-#endif()
+
+
+#set(EIGEN_FUNCTORS_PLUGIN_PATH "eigen_plugins/FunctorsPlugin.hpp")
+#if (EIGEN_FUNCTORS_PLUGIN)
+#    if (NOT EIGEN_FUNCTORS_PLUGIN STREQUAL EIGEN_FUNCTORS_PLUGIN_PATH)
+#        MESSAGE(FATAL_ERROR "EIGEN_FUNCTORS_PLUGIN already defined!")
+#    endif ()
+#else (EIGEN_FUNCTORS_PLUGIN)
+#    add_definitions(-DEIGEN_FUNCTORS_PLUGIN=\"${EIGEN_FUNCTORS_PLUGIN_PATH}\")
+#endif (EIGEN_FUNCTORS_PLUGIN)
+#
+#set(EIGEN_DENSEBASE_PLUGIN_PATH "eigen_plugins/DenseBasePlugin.hpp")
+#if (EIGEN_DENSEBASE_PLUGIN)
+#    if (NOT EIGEN_DENSEBASE_PLUGIN STREQUAL EIGEN_DENSEBASE_PLUGIN_PATH)
+#        MESSAGE(FATAL_ERROR "EIGEN_DENSEBASE_PLUGIN already defined!")
+#    endif ()
+#else (EIGEN_DENSEBASE_PLUGIN)
+#    add_definitions(-DEIGEN_DENSEBASE_PLUGIN=\"${EIGEN_DENSEBASE_PLUGIN_PATH}\")
+#endif (EIGEN_DENSEBASE_PLUGIN)
+
+find_package(OpenCV 3.0 QUIET)
+if(NOT OpenCV_FOUND)
+    #   message(FATAL_ERROR "OpenCV not found.")
+    find_package(OpenCV 2.4.3 QUIET)
+    if(NOT OpenCV_FOUND)
+        message(FATAL_ERROR "OpenCV > 2.4.3 not found.")
+    endif()
+endif()
 
 ###########
 ## Build ##
@@ -62,7 +74,7 @@ set(Eigen3_FIND_VERSION "${Eigen3_FIND_VERSION_MAJOR}.${Eigen3_FIND_VERSION_MINO
 include_directories(
   include
   ${EIGEN3_INCLUDE_DIR}
-#        ${OpenCV_INCLUDE_DIR}
+        ${OpenCV_INCLUDE_DIR}
 )
 
 ## Declare a cpp library
@@ -86,4 +98,4 @@ add_library(${PROJECT_NAME} SHARED
 #        src/InpaintFilter.cpp
 )
 
-#target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBS})
+target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBS})

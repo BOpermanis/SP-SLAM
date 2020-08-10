@@ -9,6 +9,7 @@
 #include"Frame.h"
 #include"Map.h"
 #include "Converter.h"
+#include "grid_map_core/grid_map_core.hpp"
 
 #include <opencv2/core/core.hpp>
 #include <mutex>
@@ -54,6 +55,7 @@ namespace ORB_SLAM2 {
         bool isBad();
         void Replace(MapPlane* pMP);
         KeyFrame* GetReferenceKeyFrame();
+        void AddBoundary(PointCloud &cloud);
     public:
         long unsigned int mnId; ///< Global ID for MapPlane;
         static long unsigned int nLastId;
@@ -71,6 +73,8 @@ namespace ORB_SLAM2 {
         int mRed;
         int mGreen;
         int mBlue;
+        grid_map::GridMap gridmap;
+
     protected:
         cv::Mat mWorldPos; ///< Position in absolute coordinates
         std::map<KeyFrame*, int> mObservations;
@@ -80,6 +84,7 @@ namespace ORB_SLAM2 {
 
         std::mutex mMutexPos;
         std::mutex mMutexFeatures;
+        std::mutex mMutexGridMap;
 
         Map* mpMap;
         // Bad flag (we do not currently erase MapPoint from memory)

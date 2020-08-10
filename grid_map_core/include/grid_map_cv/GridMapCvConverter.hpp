@@ -15,12 +15,18 @@
 
 // STD
 #include <iostream>
-
+#include <opencv2/core/core.hpp>
 namespace grid_map {
 
 /*!
  * Conversions between grid maps and OpenCV images.
  */
+
+//cv::Scalar minCoeffOfFinites(grid_map::Matrix *something)
+//    {
+//        return cv::Scalar(something->redux(Eigen::internal::scalar_min_of_finites_op<cv::Scalar>()));
+//    }
+
 class GridMapCvConverter
 {
  public:
@@ -174,8 +180,10 @@ class GridMapCvConverter
   static bool toImage(const grid_map::GridMap& gridMap, const std::string& layer,
                       const int encoding, cv::Mat& image)
   {
-    const float minValue = gridMap.get(layer).minCoeffOfFinites();
-    const float maxValue = gridMap.get(layer).maxCoeffOfFinites();
+//    const float minValue = gridMap.get(layer).minCoeffOfFinites();
+//    const float maxValue = gridMap.get(layer).maxCoeffOfFinites();
+      const float minValue = gridMap.get(layer).minCoeff();
+      const float maxValue = gridMap.get(layer).maxCoeff();
     return toImage<Type_, NChannels_>(gridMap, layer, encoding, minValue, maxValue, image);
   };
 

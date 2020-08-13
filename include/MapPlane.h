@@ -10,7 +10,7 @@
 #include"Map.h"
 #include "Converter.h"
 #include "grid_map_core/grid_map_core.hpp"
-
+#include "grid_map_cv/grid_map_cv.hpp"
 #include <opencv2/core/core.hpp>
 #include <mutex>
 //#include <pcl/common/transforms.h>
@@ -48,6 +48,8 @@ namespace ORB_SLAM2 {
         map<KeyFrame*, int> GetNotSeenObservations();
         map<KeyFrame*, int> GetParObservations();
         map<KeyFrame*, int> GetVerObservations();
+
+        cv::Mat GetGridMap();
         int GetIndexInKeyFrame(KeyFrame *pKF);
         int GetNotSeenIndexInKeyFrame(KeyFrame *pKF);
         void UpdateBoundary(const Frame& pF, int id);
@@ -55,7 +57,7 @@ namespace ORB_SLAM2 {
         bool isBad();
         void Replace(MapPlane* pMP);
         KeyFrame* GetReferenceKeyFrame();
-        void AddBoundary(PointCloud &cloud);
+        void polygonToGrid();
     public:
         long unsigned int mnId; ///< Global ID for MapPlane;
         static long unsigned int nLastId;
@@ -74,6 +76,8 @@ namespace ORB_SLAM2 {
         int mGreen;
         int mBlue;
         grid_map::GridMap gridmap;
+        int previous_cnt = 0;
+        int previous_update_size_index = 0;
 
     protected:
         cv::Mat mWorldPos; ///< Position in absolute coordinates

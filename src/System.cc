@@ -562,4 +562,12 @@ vector<cv::KeyPoint> System::GetTrackedKeyPointsUn()
             }
         }
     }
+
+    cv::Mat System::get_gridmaps(){
+        cv::Mat gridmaps;
+        for (auto it: mpMap->GetAllMapPlanes())
+            gridmaps.push_back(it->GetGridMap());
+        return gridmaps;
+    }
+
 } //namespace ORB_SLAM

@@ -137,6 +137,7 @@ public:
     cv::Mat dump_boundary_pts(){return plane_boundary_pts;}
     cv::Mat dump_cntBoundaryUpdateSizes(){return cntBoundaryUpdateSizes;}
 
+    cv::Mat get_gridmaps();
 
 private:
 

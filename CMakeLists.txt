@@ -123,9 +123,9 @@ add_executable(SPSLAM
         Examples/RGB-D/SPSLAM.cc)
 target_link_libraries(SPSLAM ${PROJECT_NAME})
 
-add_executable(slam_zero_run
-        Examples/slam_zero_run.cpp Examples/gridmap_example.cpp)
-target_link_libraries(slam_zero_run ${PROJECT_NAME})
+#add_executable(slam_zero_run
+#        Examples/slam_zero_run.cpp Examples/gridmap_example.cpp)
+#target_link_libraries(slam_zero_run ${PROJECT_NAME})
 
 add_executable(cape_offline CAPE/run_cape_offline.cpp
         CAPE/CAPE.cpp

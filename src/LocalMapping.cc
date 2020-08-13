@@ -776,9 +776,8 @@ bool LocalMapping::isFinished()
 }
 
 void LocalMapping::MaintainMapPlanes(){
-    for(auto plane: mpMap->GetAllMapPlanes()){
-//        Gri
-    }
+    for(auto plane: mpMap->GetAllMapPlanes())
+        plane->polygonToGrid();
 }
 
 } //namespace ORB_SLAM

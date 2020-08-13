@@ -8,10 +8,49 @@
 #include <mutex>
 #include <time.h>
 
+
+
 namespace ORB_SLAM2{
 
     typedef cv::Vec3f PointT;
     typedef std::vector<PointT> PointCloud;
+
+    PointT crossProduct(PointT &v_A, PointT &v_B) {
+        PointT c_P;
+        c_P[0] = v_A[1] * v_B[2] - v_A[2] * v_B[1];
+        c_P[1] = -(v_A[0] * v_B[2] - v_A[2] * v_B[0]);
+        c_P[2] = v_A[0] * v_B[1] - v_A[1] * v_B[0];
+        return c_P;
+    }
+
+    cv::Vec2f to_plane_coords(PointT pt, cv::Mat3f &A1){
+        auto a = cv::Mat(pt);
+        cv::Mat b = A1 * a;
+        return cv::Vec2f(b.at<float>(1), b.at<float>(2));
+    }
+
+    cv::Mat3f projector_matrix(cv::Mat &coef){
+        PointT plane_norm(coef.at<float>(0), coef.at<float>(1), coef.at<float>(2));
+        PointT e1(-plane_norm[1], plane_norm[0], 0.0);
+        e1 /= cv::sum(e1)[0];
+        PointT e2 = crossProduct(plane_norm, e1);
+        e2 /= cv::sum(e2)[0];
+
+        cv::Mat A = cv::Mat::zeros(cv::Size(3, 3),CV_32F);
+        A.at<cv::Vec3f>(0) = plane_norm;
+        A.at<cv::Vec3f>(1) = e1;
+        A.at<cv::Vec3f>(2) = e2;
+
+        auto A1 = A.t().inv();
+
+//    cout << "plane_norm " << plane_norm << endl;
+//    cout << "e1 " << e1 << endl;
+//    cout << "e2 " << e2 << endl;
+//    cout << "A1" << endl << A1 << endl;
+
+        return A1;
+    }
+
 
     void Transformation(const PointCloud &cloud_in, PointCloud &cloud_out, const cv::Mat4f &T){
         cv::Mat vec1 = cv::Mat::ones(4, 1, CV_32F);
@@ -40,8 +79,9 @@ namespace ORB_SLAM2{
         mRed = rand() % 255;
         mBlue = rand() % 255;
         mGreen = rand() % 255;
-        gridmap.setGeometry(grid_map::Length(30.0, 30.0), 0.01, grid_map::Position(0.0, 0.0));
-
+        gridmap = grid_map::GridMap( { "layer" });
+        gridmap.setGeometry(grid_map::Length(30.0, 30.0), 0.01, grid_map::Position(15.0, 15.0));
+        gridmap["layer"].setConstant(0.0);
 //        Eigen::Isometry3d T = ORB_SLAM2::Converter::toSE3Quat(pRefKF->GetPose());
 //        auto T1 = T.inverse().matrix();
         auto T = pRefKF->GetPose().inv();
@@ -225,22 +265,49 @@ namespace ORB_SLAM2{
         unique_lock<mutex> lock(mMutexFeatures);
         return mpRefKF;
     }
-    void MapPlane::AddBoundary(PointCloud &cloud)
-    {
-        auto coef = GetWorldPos();
-        PointT plane_norm(coef.at<float>(0), coef.at<float>(1), coef.at<float>(2));
-        auto v = - coef.at<float>(3) / (coef.at<float>(0)*coef.at<float>(0) + coef.at<float>(1) * coef.at<float>(1) + coef.at<float>(2)* coef.at<float>(2));
 
-        auto pt0 = v * plane_norm;
-        float dist;
-        PointT a;
+    void MapPlane::polygonToGrid(){
         unique_lock<mutex> lock(mMutexGridMap);
-        grid_map::Polygon polygon;
-        for(auto &pt: cloud){
-            a = pt0 - pt;
-            dist = plane_norm[0] * a[0] + plane_norm[1] * a[1] + plane_norm[2] * a[2];
-            plane_norm * dist + pt;
+//        unique_lock<mutex> lock2(mGlobalMutex);
 
+        auto coef = GetWorldPos();
+        auto A1 = projector_matrix(coef);
+
+        int j, cnt;
+        int update_size = cntBoundaryUpdateSizes.size();
+        for(int i=previous_update_size_index; i < update_size; i++){
+            cnt = cntBoundaryUpdateSizes[i];
+            grid_map::Polygon polygon;
+
+//            for(j=previous_cnt; j<cnt+previous_cnt; j++){
+//                cout << "jjjjjjjjjjj " << previous_cnt << " " << j << " " << mvBoundaryPoints.size() << endl;
+//                cv::Vec2f pt = to_plane_coords(mvBoundaryPoints[j], A1);
+//                polygon.addVertex(grid_map::Position(pt[0], pt[1]));
+//            }
+            for(j=previous_cnt; j<cnt+previous_cnt; j++){
+//                cout << "jjjjjjjjjjj " << previous_cnt << " " << j << " " << mvBoundaryPoints.size() << endl;
+//                cv::Vec2f pt = to_plane_coords(mvBoundaryPoints[j], A1);
+                auto a = cv::Mat(mvBoundaryPoints[j]);
+                cv::Mat b = A1 * a;
+                polygon.addVertex(grid_map::Position(b.at<float>(1), b.at<float>(2)));
+            }
+
+            for (grid_map::PolygonIterator iterator(gridmap, polygon); !iterator.isPastEnd(); ++iterator)
+                gridmap.at("layer", *iterator) += 1;
+
+            previous_cnt = j;
+            previous_update_size_index = update_size;
         }
+//        mvBoundaryPoints.clear();
+//        cntBoundaryUpdateSizes.clear();
     }
+    cv::Mat MapPlane::GetGridMap(){
+        unique_lock<mutex> lock(mMutexGridMap);
+        const float minValue = 0.0;
+        const float maxValue = 2.0;
+        cv::Mat image;
+        grid_map::GridMapCvConverter::toImage<unsigned short, 1>(gridmap, "layer", CV_16UC1, minValue, maxValue, image);
+        return image;
+    }
+
 }

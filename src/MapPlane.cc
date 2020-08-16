@@ -61,14 +61,7 @@ namespace ORB_SLAM2{
         A.at<cv::Vec3f>(1) = e1;
         A.at<cv::Vec3f>(2) = e2;
 
-        auto A1 = A.t().inv();
-
-//    cout << "plane_norm " << plane_norm << endl;
-//    cout << "e1 " << e1 << endl;
-//    cout << "e2 " << e2 << endl;
-//    cout << "A1" << endl << A1 << endl;
-
-        return A1;
+        return A.t().inv();;
     }
 
 
@@ -100,7 +93,7 @@ namespace ORB_SLAM2{
         mBlue = rand() % 255;
         mGreen = rand() % 255;
         gridmap = grid_map::GridMap( { "layer" });
-        gridmap.setGeometry(grid_map::Length(10.0, 10.0), 0.1, grid_map::Position(5.0, 5.0));
+        gridmap.setGeometry(grid_map::Length(3.0, 3.0), 0.01, grid_map::Position(5.0, 5.0));
         gridmap["layer"].setConstant(0.0);
 //        Eigen::Isometry3d T = ORB_SLAM2::Converter::toSE3Quat(pRefKF->GetPose());
 //        auto T1 = T.inverse().matrix();

@@ -182,12 +182,9 @@ void Map::clear()
     for(set<KeyFrame*>::iterator sit=mspKeyFrames.begin(), send=mspKeyFrames.end(); sit!=send; sit++)
         delete *sit;
 
-//    unique_lock<mutex> lock(mMutexGridmapping);
-//    cout << "11111 start" << endl;
+    unique_lock<mutex> lock(mMutexGridmapping);
     for(set<MapPlane*>::iterator sit=mspMapPlanes.begin(), send=mspMapPlanes.end(); sit!=send; sit++)
         delete *sit;
-
-    cout << "11111 end" << endl;
 
     mspMapPoints.clear();
     mspKeyFrames.clear();

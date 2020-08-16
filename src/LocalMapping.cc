@@ -776,7 +776,7 @@ bool LocalMapping::isFinished()
 }
 
 void LocalMapping::MaintainMapPlanes(){
-    unique_lock<mutex> lock(mMutexReset);
+//    unique_lock<mutex> lock(mMutexReset);
     for(auto plane: mpMap->GetAllMapPlanes())
         plane->polygonToGrid();
 }

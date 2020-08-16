@@ -81,7 +81,7 @@ private:
   grid_map::Polygon polygon_;
 
   //! Grid submap iterator.
-//  std::shared_ptr<SubmapIterator> internalIterator_;
+  std::shared_ptr<SubmapIterator> internalIterator_;
 
   //! Map information needed to get position from iterator.
   Length mapLength_;

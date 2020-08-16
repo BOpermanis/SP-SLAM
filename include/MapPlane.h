@@ -58,6 +58,7 @@ namespace ORB_SLAM2 {
         void Replace(MapPlane* pMP);
         KeyFrame* GetReferenceKeyFrame();
         void polygonToGrid();
+
     public:
         long unsigned int mnId; ///< Global ID for MapPlane;
         static long unsigned int nLastId;

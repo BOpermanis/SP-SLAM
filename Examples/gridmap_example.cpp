@@ -84,9 +84,9 @@ int main() {
     cv::namedWindow( "Display window", cv::WINDOW_AUTOSIZE );// Create a window for display.
     GridMap map;
     map = GridMap( { "layer" });
-    map.setGeometry(Length(3.0, 3.0), 0.01, Position(0.0, 0.0));
+    map.setGeometry(Length(3.0, 3.0), 0.01, Position(1.5, 1.5));
     map["layer"].setConstant(0.0);
-    cout << map.getSize() << endl;
+    cout << "map.getSize() " << map.getSize() << endl;
 
     Polygon polygon;
     polygon.addVertex(Position(1.0, 1.0));
@@ -112,10 +112,10 @@ int main() {
 //    cout << map.at("layer", Index(219,219)) << endl;
 //    cout << map.at("layer", Index(-130,120)) << endl;
 
-    cout << map.atPosition("layer", Position(1.5,1.5)) << endl;
-    cout << map.atPosition("layer", Position(1.01,1.01)) << endl;
-    cout << map.atPosition("layer", Position(0.51,0.51)) << endl;
-    cout << map.atPosition("layer", Position(0.0,0.0)) << endl;
+    cout << "11 " << map.atPosition("layer", Position(1.5,1.5)) << endl;
+    cout << "22 " <<  map.atPosition("layer", Position(1.01,1.01)) << endl;
+    cout << "33 " <<  map.atPosition("layer", Position(0.51,0.51)) << endl;
+    cout << "44 " <<  map.atPosition("layer", Position(0.01,0.01)) << endl;
 //    cout << map.atPosition("layer", Position(-0.51,-0.51)) << endl;
 //    cout << map.atPosition("layer", Position(2.02,2.02)) << endl;
 //    cout << map.atPosition("layer", Position(2.99,2.99)) << endl;
@@ -123,8 +123,8 @@ int main() {
     Index i;
     map.getPosition(Index(100,100), p);
     map.getIndex(Position(0.51,0.51), i);
-    cout << p << endl;
-    cout << i << endl;
+    cout << "position " << p.x() << endl;
+    cout << "index " << i.x() << endl;
 
     const float minValue = 0.0;
     const float maxValue = 2.0;

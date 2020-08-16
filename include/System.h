@@ -204,6 +204,7 @@ private:
     cv::Mat plane_params;
     cv::Mat plane_boundary_pts;
     cv::Mat cntBoundaryUpdateSizes;
+
     // point cloud mapping
 //    shared_ptr<PointCloudMapping>  mpPointCloudMapping;
 };

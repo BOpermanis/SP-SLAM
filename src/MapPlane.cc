@@ -29,9 +29,29 @@ namespace ORB_SLAM2{
         return cv::Vec2f(b.at<float>(1), b.at<float>(2));
     }
 
-    cv::Mat3f projector_matrix(cv::Mat &coef){
+    cv::Mat3f projector_matrix(cv::Mat &coef, int i0, int i1){
         PointT plane_norm(coef.at<float>(0), coef.at<float>(1), coef.at<float>(2));
-        PointT e1(-plane_norm[1], plane_norm[0], 0.0);
+
+        if(i0 == -1){
+            i0 = 0;
+            if (abs(plane_norm[i0]) < abs(plane_norm[1])) i0 = 1;
+            if (abs(plane_norm[i0]) < abs(plane_norm[2])) i0 = 2;
+            i1 = 0;
+            if(i0 == 0) i1 = 1;
+        }
+
+        if(plane_norm[i0] > 0) plane_norm *= -1;
+
+        PointT e1(0.0, 0.0, 0.0);
+
+        if (plane_norm[i0] > 0){
+            e1[i1] = plane_norm[i0];
+            e1[i0] = -plane_norm[i1];
+        }else{
+            e1[i1] = -plane_norm[i0];
+            e1[i0] = plane_norm[i1];
+        }
+
         e1 /= cv::sum(e1)[0];
         PointT e2 = crossProduct(plane_norm, e1);
         e2 /= cv::sum(e2)[0];
@@ -80,7 +100,7 @@ namespace ORB_SLAM2{
         mBlue = rand() % 255;
         mGreen = rand() % 255;
         gridmap = grid_map::GridMap( { "layer" });
-        gridmap.setGeometry(grid_map::Length(30.0, 30.0), 0.01, grid_map::Position(15.0, 15.0));
+        gridmap.setGeometry(grid_map::Length(10.0, 10.0), 0.1, grid_map::Position(5.0, 5.0));
         gridmap["layer"].setConstant(0.0);
 //        Eigen::Isometry3d T = ORB_SLAM2::Converter::toSE3Quat(pRefKF->GetPose());
 //        auto T1 = T.inverse().matrix();
@@ -210,8 +230,6 @@ namespace ORB_SLAM2{
     void MapPlane::UpdateBoundary(const ORB_SLAM2::Frame &pF, int id) {
         cntBoundaryUpdateSizes.push_back(pF.mvBoundaryPoints[id].size());
         Transformation(pF.mvBoundaryPoints[id], mvBoundaryPoints, pF.mTcw.inv());
-//        Eigen::Isometry3d T = ORB_SLAM2::Converter::toSE3Quat( pF.mTcw );
-//        pcl::transformPointCloud( pF.mvBoundaryPoints[id], *mvBoundaryPoints, T.inverse().matrix());
     }
 
     bool MapPlane::IsInKeyFrame(KeyFrame *pKF)
@@ -268,10 +286,11 @@ namespace ORB_SLAM2{
 
     void MapPlane::polygonToGrid(){
         unique_lock<mutex> lock(mMutexGridMap);
-//        unique_lock<mutex> lock2(mGlobalMutex);
 
         auto coef = GetWorldPos();
-        auto A1 = projector_matrix(coef);
+
+
+        auto A1 = projector_matrix(coef, i0, i1);
 
         int j, cnt;
         int update_size = cntBoundaryUpdateSizes.size();
@@ -279,16 +298,9 @@ namespace ORB_SLAM2{
             cnt = cntBoundaryUpdateSizes[i];
             grid_map::Polygon polygon;
 
-//            for(j=previous_cnt; j<cnt+previous_cnt; j++){
-//                cout << "jjjjjjjjjjj " << previous_cnt << " " << j << " " << mvBoundaryPoints.size() << endl;
-//                cv::Vec2f pt = to_plane_coords(mvBoundaryPoints[j], A1);
-//                polygon.addVertex(grid_map::Position(pt[0], pt[1]));
-//            }
             for(j=previous_cnt; j<cnt+previous_cnt; j++){
-//                cout << "jjjjjjjjjjj " << previous_cnt << " " << j << " " << mvBoundaryPoints.size() << endl;
-//                cv::Vec2f pt = to_plane_coords(mvBoundaryPoints[j], A1);
                 auto a = cv::Mat(mvBoundaryPoints[j]);
-                cv::Mat b = A1 * a;
+                cv::Mat b = A1 * a + 5.0;
                 polygon.addVertex(grid_map::Position(b.at<float>(1), b.at<float>(2)));
             }
 

@@ -97,6 +97,8 @@ namespace ORB_SLAM2 {
 
         // Reference KeyFrame
         KeyFrame* mpRefKF;
+        int i0 = -1;
+        int i1 = -1;
 //        void SetColor();
     };
 }

@@ -71,6 +71,8 @@ public:
   static void toMat8U(const std::vector<TDescriptor> &descriptors,
     cv::Mat &mat);
 
+    static void fromStream(cv::Mat &m,std::istream &str);
+
 };
 
 } // namespace DBoW2

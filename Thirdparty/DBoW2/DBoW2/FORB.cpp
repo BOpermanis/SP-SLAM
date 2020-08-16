@@ -186,6 +186,15 @@ void FORB::toMat8U(const std::vector<TDescriptor> &descriptors,
   
 }
 
+
+    void FORB::fromStream(cv::Mat &m,std::istream &str){
+        int type,cols,rows;
+        str.read((char*)&cols,sizeof(cols));
+        str.read((char*)&rows,sizeof(rows));
+        str.read((char*)&type,sizeof(type));
+        m.create(rows,cols,type);
+        str.read((char*)m.ptr<char>(0),m.elemSize()*m.cols);
+    }
 // --------------------------------------------------------------------------
 
 } // namespace DBoW2

@@ -38,7 +38,9 @@ int main()
     int argc = 5;
     string argv[6];
     argv[0] = "";
-    argv[1] = "/ORBvoc.txt";
+//    argv[1] = "/ORBvoc.txt";
+    argv[1] = "/DBow3/orbvoc.dbow3";
+
     argv[2] = "/SP-SLAM/Examples/RGB-D/TUM1.yaml";
     argv[3] = "/home/slam_data/data_sets/rgbd_dataset_freiburg1_xyz";
     argv[4] = "/home/slam_data/data_sets/rgbd_dataset_freiburg1_xyz/rgb.txt";

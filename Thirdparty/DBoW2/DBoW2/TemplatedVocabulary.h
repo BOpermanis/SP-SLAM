@@ -30,6 +30,8 @@
 #include "FeatureVector.h"
 #include "BowVector.h"
 #include "ScoringObject.h"
+#include "quicklz.h"
+#include "FORB.h"
 
 #include "../DUtils/Random.h"
 
@@ -240,6 +242,9 @@ public:
    */
   bool loadFromTextFile(const std::string &filename);
 
+  bool loadFromBinary(const std::string &filename);
+
+  bool load(std::istream &stream);
   /**
    * Saves the vocabulary into a text file
    * @param filename
@@ -257,8 +262,11 @@ public:
    * @param filename
    */
   void load(const std::string &filename);
-  
-  /** 
+
+    void fromStream(  std::istream &str )   throw(std::exception);
+
+
+    /**
    * Saves the vocabulary to a file storage structure
    * @param fn node in file storage
    */
@@ -1315,6 +1323,77 @@ void TemplatedVocabulary<TDescriptor,F>::getWordsFromNode
 }
 
 // --------------------------------------------------------------------------
+    template<class TDescriptor, class F>
+    void TemplatedVocabulary<TDescriptor,F>::fromStream(  std::istream &str )   throw(std::exception){
+
+
+        m_words.clear();
+        m_nodes.clear();
+        uint64_t sig=0;//magic number describing the file
+        str.read((char*)&sig,sizeof(sig));
+        if (sig!=88877711233) throw std::runtime_error("Vocabulary::fromStream  is not of appropriate type");
+        bool compressed;
+        str.read((char*)&compressed,sizeof(compressed));
+        uint32_t nnodes;
+        str.read((char*)&nnodes,sizeof(nnodes));
+        if(nnodes==0)return;
+        std::stringstream decompressed_stream;
+        std::istream *_used_str=0;
+        if (compressed){
+            qlz_state_decompress state_decompress;
+            memset(&state_decompress, 0, sizeof(qlz_state_decompress));
+            int chunkSize=10000;
+            std::vector<char> decompressed(chunkSize);
+            std::vector<char> input(chunkSize+400);
+            //read how many chunks are there
+            uint32_t nChunks;
+            str.read((char*)&nChunks,sizeof(nChunks));
+            for(int i=0;i<nChunks;i++){
+                str.read(&input[0],9);
+                int c=qlz_size_compressed(&input[0]);
+                str.read(&input[9],c-9);
+                size_t d=qlz_decompress(&input[0], &decompressed[0], &state_decompress);
+                decompressed_stream.write(&decompressed[0],d);
+            }
+            _used_str=&decompressed_stream;
+        }
+        else{
+            _used_str=&str;
+        }
+
+        _used_str->read((char*)&m_k,sizeof(m_k));
+        _used_str->read((char*)&m_L,sizeof(m_L));
+        _used_str->read((char*)&m_scoring,sizeof(m_scoring));
+        _used_str->read((char*)&m_weighting,sizeof(m_weighting));
+
+        createScoringObject();
+        m_nodes.resize(nnodes );
+        m_nodes[0].id = 0;
+
+        for(size_t i = 1; i < m_nodes.size(); ++i)
+        {
+            NodeId nid;
+            _used_str->read((char*)&nid,sizeof(NodeId));
+            Node& child = m_nodes[nid];
+            child.id=nid;
+            _used_str->read((char*)&child.parent,sizeof(child.parent));
+            _used_str->read((char*)&child.weight,sizeof(child.weight));
+            FORB::fromStream(child.descriptor,*_used_str);
+            m_nodes[child.parent].children.push_back(child.id);
+        }
+        //    // words
+        uint32_t m_words_size;
+        _used_str->read((char*)&m_words_size,sizeof(m_words_size));
+        m_words.resize(m_words_size);
+        for(unsigned int i = 0; i < m_words.size(); ++i)
+        {
+            WordId wid;NodeId nid;
+            _used_str->read((char*)&wid,sizeof(wid));
+            _used_str->read((char*)&nid,sizeof(nid));
+            m_nodes[nid].word_id = wid;
+            m_words[wid] = &m_nodes[nid];
+        }
+    }
 
 template<class TDescriptor, class F>
 int TemplatedVocabulary<TDescriptor,F>::stopWords(double minWeight)
@@ -1331,8 +1410,41 @@ int TemplatedVocabulary<TDescriptor,F>::stopWords(double minWeight)
   }
   return c;
 }
+    template<class TDescriptor, class F>
+    bool TemplatedVocabulary<TDescriptor,F>::load(std::istream &ifile)
+    {
+        uint64_t sig;//magic number describing the file
+        ifile.read((char*)&sig,sizeof(sig));
+        if (sig != 88877711233) // Check if it is a binary file.
+            return false;
+
+        ifile.seekg(0,std::ios::beg);
+        fromStream(ifile);
+        return true;
+    }
 
 // --------------------------------------------------------------------------
+    template<class TDescriptor, class F>
+    bool TemplatedVocabulary<TDescriptor,F>::loadFromBinary(const std::string &filename)
+    {
+        m_words.clear();
+        m_nodes.clear();
+        //check first if it is a binary file
+        std::ifstream ifile(filename,std::ios::binary);
+        if (!ifile) throw std::runtime_error("Vocabulary::load Could not open file :"+filename+" for reading");
+        if(!load(ifile)) {
+            if ( filename.find(".txt")!=std::string::npos) {
+                return loadFromTextFile(filename);
+            } else {
+                cv::FileStorage fs(filename.c_str(), cv::FileStorage::READ);
+                if(!fs.isOpened()) throw std::string("Could not open file ") + filename;
+                load(fs);
+                return true;
+            }
+
+        }
+        return true;
+    }
 
 template<class TDescriptor, class F>
 bool TemplatedVocabulary<TDescriptor,F>::loadFromTextFile(const std::string &filename)

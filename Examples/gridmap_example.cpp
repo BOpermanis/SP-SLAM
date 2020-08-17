@@ -102,9 +102,16 @@ int main() {
     polygon2.addVertex(Position(1.2, 2.2));
 
 //    PolygonIterator iterator(map, polygon);
+//    isInside
+    Position p1(1.2, 2.2);
+    Position p2(1.2, 2.2);
+    for (grid_map::LineIterator iterator(map, p1, p2); !iterator.isPastEnd(); ++iterator)
+        map.at("layer", *iterator) -= 2;
 
-    for (PolygonIterator iterator(map, polygon); !iterator.isPastEnd(); ++iterator) map.at("layer", *iterator) += 1;
-    for (PolygonIterator iterator(map, polygon2); !iterator.isPastEnd(); ++iterator) map.at("layer", *iterator) += 1;
+    for (PolygonIterator iterator(map, polygon); !iterator.isPastEnd(); ++iterator){
+        map.at("layer", *iterator) += 1;
+    }
+//    for (PolygonIterator iterator(map, polygon2); !iterator.isPastEnd(); ++iterator) map.at("layer", *iterator) += 1;
 
 //    cout << map.at("layer", Index(1,1)) << endl;
 //    cout << map.at("layer", Index(51,51)) << endl;

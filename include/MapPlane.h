@@ -102,7 +102,6 @@ namespace ORB_SLAM2 {
         int i0 = -1;
         int i1 = -1;
 
-
 //        void SetColor();
     };
 }

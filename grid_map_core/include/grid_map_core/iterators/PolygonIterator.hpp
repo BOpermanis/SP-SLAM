@@ -61,14 +61,14 @@ public:
    */
   bool isPastEnd() const;
 
+    bool isInside(const Index array) const;
+
 private:
 
   /*!
    * Check if current index is inside polygon.
    * @return true if inside, false otherwise.
    */
-  bool isInside() const;
-
   /*!
    * Finds the submap that fully contains the polygon and returns the parameters.
    * @param[in] polygon the polygon to get the submap for.

@@ -9,7 +9,6 @@
 #include <time.h>
 
 
-
 namespace ORB_SLAM2{
 
     typedef cv::Vec3f PointT;
@@ -92,9 +91,10 @@ namespace ORB_SLAM2{
         mRed = rand() % 255;
         mBlue = rand() % 255;
         mGreen = rand() % 255;
-        gridmap = grid_map::GridMap( { "layer" });
-        gridmap.setGeometry(grid_map::Length(3.0, 3.0), 0.1, grid_map::Position(5.0, 5.0));
+        gridmap = grid_map::GridMap( { "layer"});
+        gridmap.setGeometry(grid_map::Length(3.0, 3.0), 0.01, grid_map::Position(5.0, 5.0));
         gridmap["layer"].setConstant(0.0);
+//        gridmap["temp"].setConstant(0.0);
 //        Eigen::Isometry3d T = ORB_SLAM2::Converter::toSE3Quat(pRefKF->GetPose());
 //        auto T1 = T.inverse().matrix();
         auto T = pRefKF->GetPose().inv();
@@ -223,6 +223,7 @@ namespace ORB_SLAM2{
     }
 
     void MapPlane::UpdateBoundary(const ORB_SLAM2::Frame &pF, int id) {
+        unique_lock<mutex> lock(mMutexGridMap);
         cntBoundaryUpdateSizes.push_back(pF.mvBoundaryPoints[id].size());
         mvIsImageBoundary.push_back(pF.mvIsImageBoundary);
         Transformation(pF.mvBoundaryPoints[id], mvBoundaryPoints, pF.mTcw.inv());
@@ -283,25 +284,50 @@ namespace ORB_SLAM2{
     void MapPlane::polygonToGrid(){
         unique_lock<mutex> lock(mMutexGridMap);
         unique_lock<mutex> lock2(mpMap->mMutexGridmapping);
+
         auto coef = GetWorldPos();
 
         auto A1 = projector_matrix(coef, i0, i1);
+        float alpha = 0.3;
 
-        int j, cnt;
+        int j, cnt, j2;
+        cv::Mat line_pts;
         int update_size = cntBoundaryUpdateSizes.size();
         for(int i=previous_update_size_index; i < update_size; i++){
             cnt = cntBoundaryUpdateSizes[i];
             grid_map::Polygon polygon;
 
+            cv::Mat b_prev;
+            j2 = 0;
+
             for(j=previous_cnt; j<cnt+previous_cnt; j++){
                 auto a = cv::Mat(mvBoundaryPoints[j]);
                 cv::Mat b = A1 * a + 5.0;
                 polygon.addVertex(grid_map::Position(b.at<float>(1), b.at<float>(2)));
+//                if (j > previous_cnt){
+//                    if (!mvIsImageBoundary[i][j2] & !mvIsImageBoundary[i][j2-1]){
+//                        grid_map::Position p1(b_prev.at<float>(1), b_prev.at<float>(2));
+//                        grid_map::Position p2(b.at<float>(1), b.at<float>(2));
+//                        grid_map::Polygon line;
+//                        line.addVertex(p1);
+//                        line.addVertex(p2);
+//                        line.thickenLine(2);
+////                        cout << "j " << j << " " << p1.x() << " " << p2.x()<< " " << p1.y() << " " << p2.y() << endl;
+////                        for (grid_map::LineIterator iterator(gridmap, p1, p2); !iterator.isPastEnd(); ++iterator)
+////                            gridmap.at("temp", *iterator) -= 2;
+//                        for (grid_map::PolygonIterator iterator(gridmap, line); !iterator.isPastEnd(); ++iterator)
+//                            gridmap.at("layer", *iterator) = (1 - alpha) * gridmap.at("layer", *iterator) - alpha * 0.5 ;
+//                    }
+//                }
+                b_prev = b;
+                j2 += 1;
             }
 
             for (grid_map::PolygonIterator iterator(gridmap, polygon); !iterator.isPastEnd(); ++iterator)
-                gridmap.at("layer", *iterator) += 1;
+                gridmap.at("layer", *iterator) = (1 - alpha) * gridmap.at("layer", *iterator) + alpha * 0.5 ;
 
+//            gridmap["layer"] = (1 - alpha) * gridmap["layer"] + alpha * gridmap["layer"];
+//            gridmap["temp"].setConstant(0.0);
             previous_cnt = j;
             previous_update_size_index = update_size;
         }

@@ -82,7 +82,7 @@ namespace ORB_SLAM2{
     long unsigned int MapPlane::nLastId = 0;
     mutex MapPlane::mGlobalMutex;
 
-    MapPlane::MapPlane(const cv::Mat &Pos, ORB_SLAM2::KeyFrame *pRefKF, int idx, Map* pMap, bool s):
+    MapPlane::MapPlane(const cv::Mat &Pos, ORB_SLAM2::KeyFrame *pRefKF, int idx, Map* pMap, std::vector<bool> is_image_border, bool s):
     mnBALocalForKF(0), mpMap(pMap), mbSeen(s), mpRefKF(pRefKF), mbBad(false) {
         Pos.copyTo(mWorldPos);
         mnId = nLastId++;
@@ -99,10 +99,12 @@ namespace ORB_SLAM2{
 //        auto T1 = T.inverse().matrix();
         auto T = pRefKF->GetPose().inv();
         if (s) {
+            mvIsImageBoundary.push_back(is_image_border);
             cntBoundaryUpdateSizes.push_back(pRefKF->mvBoundaryPoints[idx].size());
             Transformation(pRefKF->mvBoundaryPoints[idx], mvBoundaryPoints, T);
             AddObservation(pRefKF, idx);
         } else {
+            mvIsImageBoundary.push_back(is_image_border);
             cntBoundaryUpdateSizes.push_back(pRefKF->mvNotSeenBoundaryPoints[idx].size());
             Transformation(pRefKF->mvNotSeenBoundaryPoints[idx], mvBoundaryPoints, T);
             AddNotSeenObservation(pRefKF, idx);
@@ -222,6 +224,7 @@ namespace ORB_SLAM2{
 
     void MapPlane::UpdateBoundary(const ORB_SLAM2::Frame &pF, int id) {
         cntBoundaryUpdateSizes.push_back(pF.mvBoundaryPoints[id].size());
+        mvIsImageBoundary.push_back(pF.mvIsImageBoundary);
         Transformation(pF.mvBoundaryPoints[id], mvBoundaryPoints, pF.mTcw.inv());
     }
 

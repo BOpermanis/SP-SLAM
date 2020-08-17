@@ -136,6 +136,7 @@ public:
     cv::Mat dump_plane_params(){return plane_params;}
     cv::Mat dump_boundary_pts(){return plane_boundary_pts;}
     cv::Mat dump_cntBoundaryUpdateSizes(){return cntBoundaryUpdateSizes;}
+    cv::Mat dump_is_pt_on_image_boundary(){return is_pt_on_image_boundary;}
 
     cv::Mat get_gridmaps();
 
@@ -204,6 +205,7 @@ private:
     cv::Mat plane_params;
     cv::Mat plane_boundary_pts;
     cv::Mat cntBoundaryUpdateSizes;
+    cv::Mat is_pt_on_image_boundary;
 
     // point cloud mapping
 //    shared_ptr<PointCloudMapping>  mpPointCloudMapping;

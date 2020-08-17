@@ -225,6 +225,7 @@ public:
     std::vector<PointCloud> mvNotSeenPlanePoints;
 
     std::vector<PointCloud> mvBoundaryPoints;
+    std::vector<bool> mvIsImageBoundary;
 //    Frame::ComputePlanesFromOrganizedPointCloud(const cv::Mat &imDepth, capewrap* cape)
     std::vector<PointCloud> mvNotSeenBoundaryPoints;
 

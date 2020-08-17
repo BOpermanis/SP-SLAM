@@ -766,6 +766,7 @@ cv::Mat Frame::UnprojectStereo(const int &i)
 
     void Frame::ComputePlanesFromOrganizedPointCloud(const cv::Mat &imDepth, capewrap* cape){
         auto capeout = cape->process(imDepth);
+        int margin = 50;
 
         int num_planes = 0;
         int i_plane;
@@ -807,12 +808,16 @@ cv::Mat Frame::UnprojectStereo(const int &i)
 //                        epsilon *= 0.7;
 //                    }
 
-                    if(coef.at<float>(3) < 0) {
-                        coef = -coef;
-                    }
+                    if(coef.at<float>(3) < 0) coef = -coef;
+
                     border = contour0;
                     PointCloud boundaryPoints;
+//                    std::vector<bool> is_on_image_boundary;
+
                     for(auto &pt: border){
+                        mvIsImageBoundary.push_back(
+                                !(pt.x > margin and pt.x < imDepth.cols - margin and pt.y > margin and
+                                  pt.y < imDepth.rows - margin));
 
                         float y = (pt.y - cape->cy_ir) / cape->fy_ir;
                         float x = (pt.x - cape->cx_ir) / cape->fx_ir;
@@ -821,6 +826,7 @@ cv::Mat Frame::UnprojectStereo(const int &i)
 
                         boundaryPoints.push_back(PointT(x * theta, y * theta, theta));
                     }
+//                    mvIsImageBoundary.push_back(is_on_image_boundary);
                     mvBoundaryPoints.push_back(boundaryPoints);
                     mvPlaneCoefficients.push_back(coef);
                 }
@@ -996,16 +1002,6 @@ cv::Mat Frame::UnprojectStereo(const int &i)
         cv::transpose(mTcw, temp);
         auto c0 = mvPlaneCoefficients[idx];
         cv::Mat c = temp*c0;
-//        float s = 0;
-//
-//        double s1 = cv::sum(temp )[0];
-//        double s2 = cv::sum(c0 )[0];
-//        s += c.at<float>(0);
-//        s += c.at<float>(1);
-//        s += c.at<float>(2);
-//        s += c.at<float>(3);
-//        cout << "plane coef sum " << s << " " << s1 << " " << s2 << " " << std::isinf(s2) << endl;
-//        if (s!=s) throw;
         return c;
     }
 

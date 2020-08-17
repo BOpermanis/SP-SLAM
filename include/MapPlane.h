@@ -30,7 +30,7 @@ namespace ORB_SLAM2 {
         typedef cv::Vec3f PointT;
         typedef std::vector<PointT> PointCloud;
     public:
-        MapPlane(const cv::Mat &Pos, KeyFrame* pRefKF, int idx, Map* pMap, bool s = true);
+        MapPlane(const cv::Mat &Pos, KeyFrame* pRefKF, int idx, Map* pMap, std::vector<bool> is_image_border, bool s = true);
 
         void SetWorldPos(const cv::Mat &Pos);
         cv::Mat GetWorldPos();
@@ -80,6 +80,7 @@ namespace ORB_SLAM2 {
         int previous_cnt = 0;
         int previous_update_size_index = 0;
 
+        std::vector<std::vector<bool>> mvIsImageBoundary;
     protected:
         cv::Mat mWorldPos; ///< Position in absolute coordinates
         std::map<KeyFrame*, int> mObservations;
@@ -100,6 +101,8 @@ namespace ORB_SLAM2 {
         KeyFrame* mpRefKF;
         int i0 = -1;
         int i1 = -1;
+
+
 //        void SetColor();
     };
 }

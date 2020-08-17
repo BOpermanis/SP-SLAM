@@ -578,14 +578,14 @@ void Tracking::StereoInitialization()
 
         for (int i = 0; i < mCurrentFrame.mnPlaneNum; ++i) {
             cv::Mat p3D = mCurrentFrame.ComputePlaneWorldCoeff(i);
-            MapPlane* pNewMP = new MapPlane(p3D, pKFini, i, mpMap);
+            MapPlane* pNewMP = new MapPlane(p3D, pKFini, i, mpMap, mCurrentFrame.mvIsImageBoundary);
             mpMap->AddMapPlane(pNewMP);
             pKFini->AddMapPlane(pNewMP, i);
         }
 
         for (int i = 0; i < mCurrentFrame.mnNotSeenPlaneNum; ++i) {
             cv::Mat p3D = mCurrentFrame.ComputeNotSeenPlaneWorldCoeff(i);
-            MapPlane* pNewMP = new MapPlane(p3D, pKFini, i, mpMap, false);
+            MapPlane* pNewMP = new MapPlane(p3D, pKFini, i, mpMap, mCurrentFrame.mvIsImageBoundary, false);
             mpMap->AddNotSeenMapPlane(pNewMP);
             pKFini->AddNotSeenMapPlane(pNewMP, i);
         }
@@ -1303,7 +1303,7 @@ void Tracking::CreateNewKeyFrame()
                 continue;
 
             cv::Mat p3D = mCurrentFrame.ComputePlaneWorldCoeff(i);
-            MapPlane* pNewMP = new MapPlane(p3D, pKF, i, mpMap);
+            MapPlane* pNewMP = new MapPlane(p3D, pKF, i, mpMap, mCurrentFrame.mvIsImageBoundary);
             mpMap->AddMapPlane(pNewMP);
             pKF->AddMapPlane(pNewMP, i);
         }
@@ -1315,7 +1315,7 @@ void Tracking::CreateNewKeyFrame()
             }
 
             cv::Mat p3D = mCurrentFrame.ComputeNotSeenPlaneWorldCoeff(i);
-            MapPlane* pNewMP = new MapPlane(p3D, pKF, i, mpMap, false);
+            MapPlane* pNewMP = new MapPlane(p3D, pKF, i, mpMap, mCurrentFrame.mvIsImageBoundary, false);
             mpMap->AddNotSeenMapPlane(pNewMP);
             pKF->AddNotSeenMapPlane(pNewMP, i);
         }

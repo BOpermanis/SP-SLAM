@@ -515,15 +515,15 @@ vector<cv::KeyPoint> System::GetTrackedKeyPointsUn()
 
     void System::PrepareDump(){
 
-        mp_3dpts.release();
-        plane_ids_from_boundary_pts.release();
-        kf_ids_from_mps.release();
-        kf_3dpts.release();
-        kf_ids.release();
-        plane_params.release();
-        plane_ids.release();
-        plane_boundary_pts.release();
-        cntBoundaryUpdateSizes.release();
+//        mp_3dpts.release();
+//        plane_ids_from_boundary_pts.release();
+//        kf_ids_from_mps.release();
+//        kf_3dpts.release();
+//        kf_ids.release();
+//        plane_params.release();
+//        plane_ids.release();
+//        plane_boundary_pts.release();
+//        cntBoundaryUpdateSizes.release(); # by cleaning this gridmapping will fail
 
         for(auto it: mpMap->GetAllMapPoints()){
             cv::Vec3f vec = it->GetWorldPos();
@@ -551,6 +551,10 @@ vector<cv::KeyPoint> System::GetTrackedKeyPointsUn()
                 plane_boundary_pts.push_back(pt);
                 plane_ids_from_boundary_pts.push_back(it->mnId);
             }
+
+            for(auto &vec: it->mvIsImageBoundary)
+                for(bool l: vec)
+                    is_pt_on_image_boundary.push_back(l);
         }
     }
 

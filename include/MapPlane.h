@@ -9,8 +9,7 @@
 #include"Frame.h"
 #include"Map.h"
 #include "Converter.h"
-#include "grid_map_core/grid_map_core.hpp"
-#include "grid_map_cv/grid_map_cv.hpp"
+
 #include <opencv2/core/core.hpp>
 #include <mutex>
 //#include <pcl/common/transforms.h>
@@ -76,7 +75,8 @@ namespace ORB_SLAM2 {
         int mRed;
         int mGreen;
         int mBlue;
-        grid_map::GridMap gridmap;
+        cv::Map gridmap = cv::Mat::zeros(cv::Size(300, 300), CV_32F);
+        cv::Map temp = cv::Mat::zeros(cv::Size(300, 300), CV_32F);
         int previous_cnt = 0;
         int previous_update_size_index = 0;
 

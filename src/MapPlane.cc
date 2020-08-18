@@ -300,24 +300,25 @@ namespace ORB_SLAM2{
 
             for(j=previous_cnt; j<cnt+previous_cnt; j++){
                 auto a = cv::Mat(mvBoundaryPoints[j]);
-                cv::Mat b = A1 * a; // + 5.0;
-                int x = int(100 * b.at<float>(1));
-                int y = int(100 * b.at<float>(2));
+                cv::Mat b = A1 * a + 1.0;
+                int x = int(70 * b.at<float>(1));
+                int y = int(70 * b.at<float>(2));
                 cv::Point pt(x, y);
                 polygon.push_back(pt);
-                if (j > previous_cnt){
-                    if (!mvIsImageBoundary[i][j2] & !mvIsImageBoundary[i][j2-1]){
-                        cv::line(gridmap, pt, pt_prev, -2, 2);
-                    }
-                }
-
+                if (j > previous_cnt)
+                    if (!mvIsImageBoundary[i][j2] & !mvIsImageBoundary[i][j2-1])
+                        cv::line(temp, pt, pt_prev, -1, 2);
                 pt_prev = pt;
                 j2 += 1;
             }
             std::vector<std::vector<cv::Point>> polygons;
             polygons.push_back(polygon);
-            cv::drawContours(gridmap, polygons, -1, 1, -1);
+            cv::drawContours(temp, polygons, -1, 1, -1);
 
+            mask = temp != 0;
+            temp = gridmap * (1-alpha) + temp * alpha;
+            temp.copyTo(gridmap, mask);
+            temp *= 0.0;
             previous_cnt = j;
             previous_update_size_index = update_size;
         }

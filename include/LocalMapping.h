@@ -73,6 +73,8 @@ public:
         unique_lock<std::mutex> lock(mMutexNewKFs);
         return mlNewKeyFrames.size();
     }
+    std::mutex mMutexIdFloor;
+    int id_floor = -1;
 
 protected:
 
@@ -123,6 +125,7 @@ protected:
 
     bool mbAcceptKeyFrames;
     std::mutex mMutexAccept;
+
 };
 
 } //namespace ORB_SLAM

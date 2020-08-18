@@ -10,7 +10,6 @@
 
 
 namespace ORB_SLAM2{
-
     typedef cv::Vec3f PointT;
     typedef std::vector<PointT> PointCloud;
 
@@ -218,6 +217,7 @@ namespace ORB_SLAM2{
     }
 
     cv::Mat MapPlane::GetWorldPos(){
+        // a*x + b*x + c*x + d = 0
         unique_lock<mutex> lock(mMutexPos);
         return mWorldPos.clone();
     }

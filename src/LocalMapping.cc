@@ -22,7 +22,7 @@
 #include "LoopClosing.h"
 #include "ORBmatcher.h"
 #include "Optimizer.h"
-#include "grid_map_core/GridMap.hpp"
+//#include "grid_map_core/GridMap.hpp"
 
 #include<mutex>
 //#include <Timer.h>
@@ -776,9 +776,31 @@ bool LocalMapping::isFinished()
 }
 
 void LocalMapping::MaintainMapPlanes(){
-//    unique_lock<mutex> lock(mMutexReset);
-    for(auto plane: mpMap->GetAllMapPlanes())
-        plane->polygonToGrid();
+    unique_lock<mutex> lock(mMutexReset);
+    unique_lock<mutex> lock2(mMutexIdFloor);
+
+    if(mpCurrentKeyFrame != NULL){
+        auto pos = mpCurrentKeyFrame->GetPose();
+        // finding floor plane
+        cv::Vec3f pt(pos.at<float>(0, 3), pos.at<float>(1, 3), pos.at<float>(2, 3));
+        float s = 0;
+        for(auto &plane: mpMap->GetAllMapPlanes()){
+            auto coef = plane->GetWorldPos();
+            if (coef.at<float>(1) < 0) coef += -1;
+            // (pt - l * n) * n + b = 0
+            float scalar = coef.at<float>(0) * pt[0] + coef.at<float>(1) * pt[1] + coef.at<float>(2) * pt[2];
+            float l = coef.at<float>(3) + scalar;
+            if (s < l * coef.at<float>(1)){
+                s = l * coef.at<float>(1);
+                id_floor = plane->mnId;
+            }
+        }
+    }
+
+    if(id_floor != -1)
+        for(auto &plane: mpMap->GetAllMapPlanes())
+            if (plane->mnId == id_floor)
+                plane->polygonToGrid();
 }
 
 } //namespace ORB_SLAM

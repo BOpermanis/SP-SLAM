@@ -91,9 +91,6 @@ namespace ORB_SLAM2{
         mBlue = rand() % 255;
         mGreen = rand() % 255;
 
-//        gridmap["temp"].setConstant(0.0);
-//        Eigen::Isometry3d T = ORB_SLAM2::Converter::toSE3Quat(pRefKF->GetPose());
-//        auto T1 = T.inverse().matrix();
         auto T = pRefKF->GetPose().inv();
         if (s) {
             mvIsImageBoundary.push_back(is_image_border);
@@ -106,7 +103,6 @@ namespace ORB_SLAM2{
             Transformation(pRefKF->mvNotSeenBoundaryPoints[idx], mvBoundaryPoints, T);
             AddNotSeenObservation(pRefKF, idx);
         }
-
     }
 
     void MapPlane::AddObservation(ORB_SLAM2::KeyFrame *pKF, int idx) {
@@ -286,8 +282,18 @@ namespace ORB_SLAM2{
         auto coef = GetWorldPos();
 
         auto A1 = projector_matrix(coef, i0, i1);
-        float alpha = 0.3;
+//        cv::Mat A1 = cv::Mat::zeros(cv::Size(3, 3),CV_32F);
+//        A1.at<cv::Vec3f>(0) = cv::Vec3f(0.0f, 1.0f, 0.0f);
+//        A1.at<cv::Vec3f>(1) = cv::Vec3f(1.0f, 0.0f, 0.0f);
+//        A1.at<cv::Vec3f>(2) = cv::Vec3f(0.0f, 0.0f, 1.0f);
 
+
+//        cout << A1.size() << " " << A1.type() << endl;
+//        cout << A2.size() << " " << A2.type() << endl;
+
+        float xf, yf, norm_a, norm_x;
+        float alpha = 0.1;
+        float center_coord = 1.3;
         int j, cnt, j2;
         cv::Mat line_pts;
         int update_size = cntBoundaryUpdateSizes.size();
@@ -300,14 +306,24 @@ namespace ORB_SLAM2{
 
             for(j=previous_cnt; j<cnt+previous_cnt; j++){
                 auto a = cv::Mat(mvBoundaryPoints[j]);
-                cv::Mat b = A1 * a + 1.0;
-                int x = int(70 * b.at<float>(1));
-                int y = int(70 * b.at<float>(2));
+                cv::Mat b = A1 * a;
+                xf = b.at<float>(1);
+                yf = b.at<float>(2);
+//                norm_a = sqrt(a.at<float>(0) * a.at<float>(0) + a.at<float>(1) * a.at<float>(1) + a.at<float>(2) * a.at<float>(2));
+//                norm_x = sqrt(xf * xf + yf * yf);
+//                if (norm_x > norm_a){
+//                    xf = norm_a * xf / norm_x;
+//                    yf = norm_a * yf / norm_x;
+//                }
+                xf += center_coord;
+                yf += center_coord;
+                int x = int(70 * xf);
+                int y = int(70 * yf);
                 cv::Point pt(x, y);
                 polygon.push_back(pt);
                 if (j > previous_cnt)
                     if (!mvIsImageBoundary[i][j2] & !mvIsImageBoundary[i][j2-1])
-                        cv::line(temp, pt, pt_prev, -1, 2);
+                        cv::line(temp, pt, pt_prev, -0.6, 2);
                 pt_prev = pt;
                 j2 += 1;
             }

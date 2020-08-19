@@ -766,7 +766,7 @@ cv::Mat Frame::UnprojectStereo(const int &i)
 
     void Frame::ComputePlanesFromOrganizedPointCloud(const cv::Mat &imDepth, capewrap* cape){
         auto capeout = cape->process(imDepth);
-        int margin = 50;
+        int margin = 100;
 
         int num_planes = 0;
         int i_plane;

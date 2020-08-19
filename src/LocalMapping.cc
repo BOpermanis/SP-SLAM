@@ -779,9 +779,9 @@ void LocalMapping::MaintainMapPlanes(){
     unique_lock<mutex> lock(mMutexReset);
     unique_lock<mutex> lock2(mMutexIdFloor);
 
+    // finding floor plane
     if(mpCurrentKeyFrame != NULL){
         auto pos = mpCurrentKeyFrame->GetPose();
-        // finding floor plane
         cv::Vec3f pt(pos.at<float>(0, 3), pos.at<float>(1, 3), pos.at<float>(2, 3));
         float s = 0;
         for(auto &plane: mpMap->GetAllMapPlanes()){
@@ -792,7 +792,7 @@ void LocalMapping::MaintainMapPlanes(){
             float l = coef.at<float>(3) + scalar;
             if (s < l * coef.at<float>(1)){
                 s = l * coef.at<float>(1);
-                id_floor = plane->mnId;
+                id_floor = int(plane->mnId);
             }
         }
     }

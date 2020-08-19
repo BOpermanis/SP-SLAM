@@ -77,7 +77,7 @@ namespace ORB_SLAM2 {
         int mBlue;
         cv::Mat gridmap = cv::Mat::zeros(cv::Size(300, 300), CV_32F);
         cv::Mat temp = cv::Mat::zeros(cv::Size(300, 300), CV_32F);
-        cv::Mat mask = cv::Mat::zeros(cv::Size(300, 300), CV_32F);;
+        cv::Mat mask = cv::Mat::zeros(cv::Size(300, 300), CV_8U);;
         int previous_cnt = 0;
         int previous_update_size_index = 0;
 

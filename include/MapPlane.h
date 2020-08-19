@@ -82,6 +82,7 @@ namespace ORB_SLAM2 {
         int previous_update_size_index = 0;
 
         std::vector<std::vector<bool>> mvIsImageBoundary;
+        std::vector<cv::Vec3f> mvViewPoints;
     protected:
         cv::Mat mWorldPos; ///< Position in absolute coordinates
         std::map<KeyFrame*, int> mObservations;

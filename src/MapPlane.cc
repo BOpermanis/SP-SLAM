@@ -91,16 +91,18 @@ namespace ORB_SLAM2{
         mBlue = rand() % 255;
         mGreen = rand() % 255;
 
-        auto T = pRefKF->GetPose().inv();
+        auto T = pRefKF->GetPose();
+        mvViewPoints.emplace_back(T.at<float>(0, 3), T.at<float>(1, 3), T.at<float>(2, 3));
+        auto T1 = T.inv();
         if (s) {
             mvIsImageBoundary.push_back(is_image_border);
             cntBoundaryUpdateSizes.push_back(pRefKF->mvBoundaryPoints[idx].size());
-            Transformation(pRefKF->mvBoundaryPoints[idx], mvBoundaryPoints, T);
+            Transformation(pRefKF->mvBoundaryPoints[idx], mvBoundaryPoints, T1);
             AddObservation(pRefKF, idx);
         } else {
             mvIsImageBoundary.push_back(is_image_border);
             cntBoundaryUpdateSizes.push_back(pRefKF->mvNotSeenBoundaryPoints[idx].size());
-            Transformation(pRefKF->mvNotSeenBoundaryPoints[idx], mvBoundaryPoints, T);
+            Transformation(pRefKF->mvNotSeenBoundaryPoints[idx], mvBoundaryPoints, T1);
             AddNotSeenObservation(pRefKF, idx);
         }
     }
@@ -218,6 +220,7 @@ namespace ORB_SLAM2{
 
     void MapPlane::UpdateBoundary(const ORB_SLAM2::Frame &pF, int id) {
         unique_lock<mutex> lock(mMutexGridMap);
+        mvViewPoints.emplace_back(pF.mTcw.at<float>(0, 3), pF.mTcw.at<float>(1, 3), pF.mTcw.at<float>(2, 3));
         cntBoundaryUpdateSizes.push_back(pF.mvBoundaryPoints[id].size());
         mvIsImageBoundary.push_back(pF.mvIsImageBoundary);
         Transformation(pF.mvBoundaryPoints[id], mvBoundaryPoints, pF.mTcw.inv());
@@ -274,6 +277,31 @@ namespace ORB_SLAM2{
         unique_lock<mutex> lock(mMutexFeatures);
         return mpRefKF;
     }
+    float center_coord = 1.3;
+    float ratio_obstacle = 0.95;
+    int to_gridmap_index(float x){
+        return int(70*(x + center_coord));
+    }
+
+    bool is_obstacle(cv::Point2i &pt1, cv::Point2i &pt2, int x_view, int y_view){
+        auto x1 = float(pt1.x - x_view);
+        auto x2 = float(pt2.x - x_view);
+        auto y1 = float(pt1.y - y_view);
+        auto y2 = float(pt2.y - y_view);
+
+        auto x3 = float((x1 + x2) / 2.0);
+        auto y3 = float((y1 + y2) / 2.0);
+        float norm3 = sqrt(x3 * x3 + y3 * y3);
+        x3 /= norm3;
+        y3 /= norm3;
+
+        float scalar1 = abs(x1 * x3 + y1 * y3);
+        float scalar2 = abs(x2 * x3 + y2 * y3);
+
+//        return !(norm1 * ratio_obstacle > norm2 || norm2 * ratio_obstacle > norm1);
+
+        return abs(scalar1 - scalar2) / (scalar1 + scalar2) < 0.01;
+    }
 
     void MapPlane::polygonToGrid(){
         unique_lock<mutex> lock(mMutexGridMap);
@@ -291,13 +319,15 @@ namespace ORB_SLAM2{
 //        cout << A1.size() << " " << A1.type() << endl;
 //        cout << A2.size() << " " << A2.type() << endl;
 
-        float xf, yf, norm_a, norm_x;
         float alpha = 0.1;
-        float center_coord = 1.3;
         int j, cnt, j2;
-        cv::Mat line_pts;
         int update_size = cntBoundaryUpdateSizes.size();
         for(int i=previous_update_size_index; i < update_size; i++){
+            auto a_view = cv::Mat(mvViewPoints[i]);
+            cv::Mat b_view = A1 * a_view;
+            int x_view = to_gridmap_index(b_view.at<float>(1));
+            int y_view = to_gridmap_index(b_view.at<float>(2));
+
             cnt = cntBoundaryUpdateSizes[i];
 
             std::vector<cv::Point> polygon;
@@ -307,23 +337,13 @@ namespace ORB_SLAM2{
             for(j=previous_cnt; j<cnt+previous_cnt; j++){
                 auto a = cv::Mat(mvBoundaryPoints[j]);
                 cv::Mat b = A1 * a;
-                xf = b.at<float>(1);
-                yf = b.at<float>(2);
-//                norm_a = sqrt(a.at<float>(0) * a.at<float>(0) + a.at<float>(1) * a.at<float>(1) + a.at<float>(2) * a.at<float>(2));
-//                norm_x = sqrt(xf * xf + yf * yf);
-//                if (norm_x > norm_a){
-//                    xf = norm_a * xf / norm_x;
-//                    yf = norm_a * yf / norm_x;
-//                }
-                xf += center_coord;
-                yf += center_coord;
-                int x = int(70 * xf);
-                int y = int(70 * yf);
+                int x = to_gridmap_index(b.at<float>(1));
+                int y = to_gridmap_index(b.at<float>(2));
                 cv::Point pt(x, y);
                 polygon.push_back(pt);
                 if (j > previous_cnt)
-                    if (!mvIsImageBoundary[i][j2] & !mvIsImageBoundary[i][j2-1])
-                        cv::line(temp, pt, pt_prev, -0.6, 2);
+                    if (!mvIsImageBoundary[i][j2] && !mvIsImageBoundary[i][j2-1] && is_obstacle(pt, pt_prev, x_view, y_view))
+                        cv::line(temp, pt, pt_prev, -1.0, 2);
                 pt_prev = pt;
                 j2 += 1;
             }

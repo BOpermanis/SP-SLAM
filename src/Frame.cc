@@ -800,17 +800,17 @@ cv::Mat Frame::UnprojectStereo(const int &i)
                 }
                 double rel_area = cv::contourArea(contour0) / (imDepth.cols * imDepth.rows);
                 if (rel_area > 0.1){
-//                    double epsilon = 0.01 * cv::arcLength(contour0,true);
-//                    while (true){
-//                        cv::approxPolyDP(contour0, border, epsilon, false);
-//                        if(border.size() > 3) break;
-//                        border.clear();
-//                        epsilon *= 0.7;
-//                    }
+                    double epsilon = 0.01 * cv::arcLength(contour0,true);
+                    while (true){
+                        cv::approxPolyDP(contour0, border, epsilon, false);
+                        if(border.size() > 3) break;
+                        border.clear();
+                        epsilon *= 0.7;
+                    }
 
                     if(coef.at<float>(3) < 0) coef = -coef;
 
-                    border = contour0;
+//                    border = contour0;
                     PointCloud boundaryPoints;
 //                    std::vector<bool> is_on_image_boundary;
 

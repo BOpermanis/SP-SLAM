@@ -300,7 +300,7 @@ namespace ORB_SLAM2{
 
 //        return !(norm1 * ratio_obstacle > norm2 || norm2 * ratio_obstacle > norm1);
 
-        return abs(scalar1 - scalar2) / (scalar1 + scalar2) < 0.01;
+        return abs(scalar1 - scalar2) / (scalar1 + scalar2) < 0.2;
     }
 
     void MapPlane::polygonToGrid(){
@@ -351,6 +351,7 @@ namespace ORB_SLAM2{
             polygons.push_back(polygon);
             cv::drawContours(temp, polygons, -1, 1, -1);
 
+            temps.push_back(temp.clone());
             mask = temp != 0;
             temp = gridmap * (1-alpha) + temp * alpha;
             temp.copyTo(gridmap, mask);

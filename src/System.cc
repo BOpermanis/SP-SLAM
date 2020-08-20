@@ -558,12 +558,73 @@ vector<cv::KeyPoint> System::GetTrackedKeyPointsUn()
         }
     }
 
+    float center_coord1 = 1.3;
+    float ratio_obstacle1 = 0.95;
+    int to_gridmap_index1(float x){
+        return int(70*(x + center_coord1));
+    }
+    cv::Vec3f crossProduct1(cv::Vec3f &v_A, cv::Vec3f &v_B) {
+        cv::Vec3f c_P;
+        c_P[0] = v_A[1] * v_B[2] - v_A[2] * v_B[1];
+        c_P[1] = -(v_A[0] * v_B[2] - v_A[2] * v_B[0]);
+        c_P[2] = v_A[0] * v_B[1] - v_A[1] * v_B[0];
+        return c_P;
+    }
+    cv::Mat3f projector_matrix1(cv::Mat &coef, int i0, int i1){
+        cv::Vec3f plane_norm(coef.at<float>(0), coef.at<float>(1), coef.at<float>(2));
+
+        if(i0 == -1){
+            i0 = 0;
+            if (abs(plane_norm[i0]) < abs(plane_norm[1])) i0 = 1;
+            if (abs(plane_norm[i0]) < abs(plane_norm[2])) i0 = 2;
+            i1 = 0;
+            if(i0 == 0) i1 = 1;
+        }
+
+        if(plane_norm[i0] > 0) plane_norm *= -1;
+
+        cv::Vec3f e1(0.0, 0.0, 0.0);
+
+        if (plane_norm[i0] > 0){
+            e1[i1] = plane_norm[i0];
+            e1[i0] = -plane_norm[i1];
+        }else{
+            e1[i1] = -plane_norm[i0];
+            e1[i0] = plane_norm[i1];
+        }
+
+        e1 /= cv::sum(e1)[0];
+        cv::Vec3f e2 = crossProduct1(plane_norm, e1);
+        e2 /= cv::sum(e2)[0];
+
+        cv::Mat A = cv::Mat::zeros(cv::Size(3, 3),CV_32F);
+        A.at<cv::Vec3f>(0) = plane_norm;
+        A.at<cv::Vec3f>(1) = e1;
+        A.at<cv::Vec3f>(2) = e2;
+
+        return A.t().inv();;
+    }
     cv::Mat System::get_gridmaps(){
         unique_lock<mutex> lock(mpLocalMapper->mMutexIdFloor);
         cv::Mat gridmap;
-        for(auto &plane: mpMap->GetAllMapPlanes())
-            if(plane->mnId==mpLocalMapper->id_floor)
-                gridmap = plane->GetGridMap();
+//        for(auto &plane: mpMap->GetAllMapPlanes())
+//            if(plane->mnId==mpLocalMapper->id_floor)
+//                gridmap = plane->GetGridMap();
+        for(auto &plane: mpMap->GetAllMapPlanes()){
+            auto coef = plane->GetWorldPos();
+
+            auto A1 = projector_matrix1(coef, plane->i0, plane->i1);
+            for(int i =0; i<plane->temps.size(); i++){
+                cv::Mat temp = plane->temps[i];
+                auto a_view = cv::Mat(plane->mvViewPoints[i]);
+                cv::Mat b_view = A1 * a_view;
+                auto x_view = float(to_gridmap_index1(b_view.at<float>(1)));
+                auto y_view = float(to_gridmap_index1(b_view.at<float>(2)));
+                temp.at<float>(0, 0) = x_view;
+                temp.at<float>(0, 1) = y_view;
+                gridmap.push_back(temp);
+            }
+        }
         return gridmap;
     }
 

@@ -235,22 +235,22 @@ int main(int argc, char ** argv){
         }
 
         // Show frame rate and labels
-        cv::rectangle(seg_rz,  cv::Point(0,0),cv::Point(width,20), cv::Scalar(0,0,0),-1);
-        std::stringstream fps;
-        cv::putText(seg_rz, fps.str(), cv::Point(15,15), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255,255,255,1));
-
-        cout<<"Nr cylinders:"<<output.nr_cylinders<<endl;
-        cout<<"Nr planes:"<<output.nr_planes<<endl;
-        int cylinder_code_offset = 50;
-        // show cylinder labels
-        if (output.nr_cylinders>0){
-            std::stringstream text;
-            text<<"Cylinders:";
-            cv::putText(seg_rz, text.str(), cv::Point(width/2,15), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255,255,255,1));
-            for(int j=0;j<output.nr_cylinders;j++){
-                cv::rectangle(seg_rz,  cv::Point(width/2 + 80+15*j,6),cv::Point(width/2 + 90+15*j,16), cv::Scalar(color_code[cylinder_code_offset+j][0],color_code[cylinder_code_offset+j][1],color_code[cylinder_code_offset+j][2]),-1);
-            }
-        }
+//        cv::rectangle(seg_rz,  cv::Point(0,0),cv::Point(width,20), cv::Scalar(0,0,0),-1);
+//        std::stringstream fps;
+//        cv::putText(seg_rz, fps.str(), cv::Point(15,15), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255,255,255,1));
+//
+//        cout<<"Nr cylinders:"<<output.nr_cylinders<<endl;
+//        cout<<"Nr planes:"<<output.nr_planes<<endl;
+//        int cylinder_code_offset = 50;
+//        // show cylinder labels
+//        if (output.nr_cylinders>0){
+//            std::stringstream text;
+//            text<<"Cylinders:";
+//            cv::putText(seg_rz, text.str(), cv::Point(width/2,15), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255,255,255,1));
+//            for(int j=0;j<output.nr_cylinders;j++){
+//                cv::rectangle(seg_rz,  cv::Point(width/2 + 80+15*j,6),cv::Point(width/2 + 90+15*j,16), cv::Scalar(color_code[cylinder_code_offset+j][0],color_code[cylinder_code_offset+j][1],color_code[cylinder_code_offset+j][2]),-1);
+//            }
+//        }
         cout << seg_rz.rows << " " << seg_rz.cols << endl;
         cv::imshow("Seg", seg_rz);
         cv::waitKey(1);

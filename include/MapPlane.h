@@ -83,6 +83,9 @@ namespace ORB_SLAM2 {
 
         std::vector<std::vector<bool>> mvIsImageBoundary;
         std::vector<cv::Vec3f> mvViewPoints;
+        std::vector<cv::Mat> temps;
+        int i0 = -1;
+        int i1 = -1;
     protected:
         cv::Mat mWorldPos; ///< Position in absolute coordinates
         std::map<KeyFrame*, int> mObservations;
@@ -101,8 +104,7 @@ namespace ORB_SLAM2 {
 
         // Reference KeyFrame
         KeyFrame* mpRefKF;
-        int i0 = -1;
-        int i1 = -1;
+
 
 //        void SetColor();
     };

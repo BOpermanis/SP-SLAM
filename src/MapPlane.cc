@@ -224,7 +224,7 @@ namespace ORB_SLAM2{
         cntBoundaryUpdateSizes.push_back(pF.mvBoundaryPoints[id].size());
         mvIsImageBoundary.push_back(pF.mvIsImageBoundary);
         Transformation(pF.mvBoundaryPoints[id], mvBoundaryPoints, pF.mTcw.inv());
-        projectMapPointsOnGridMap(pF);
+//        projectMapPointsOnGridMap(pF);
     }
 
     bool MapPlane::IsInKeyFrame(KeyFrame *pKF)
@@ -304,29 +304,39 @@ namespace ORB_SLAM2{
         return abs(scalar1 - scalar2) / (scalar1 + scalar2) < 0.01;
     }
 
-    void MapPlane::polygonToGrid(){
+    void MapPlane::polygonToGrid(KeyFrame *pF){
         unique_lock<mutex> lock(mMutexGridMap);
         unique_lock<mutex> lock2(mpMap->mMutexGridmapping);
 
         auto coef = GetWorldPos();
-
         auto A1 = projector_matrix(coef, i0, i1);
-//        cv::Mat A1 = cv::Mat::zeros(cv::Size(3, 3),CV_32F);
-//        A1.at<cv::Vec3f>(0) = cv::Vec3f(0.0f, 1.0f, 0.0f);
-//        A1.at<cv::Vec3f>(1) = cv::Vec3f(1.0f, 0.0f, 0.0f);
-//        A1.at<cv::Vec3f>(2) = cv::Vec3f(0.0f, 0.0f, 1.0f);
 
-
-//        cout << A1.size() << " " << A1.type() << endl;
-//        cout << A2.size() << " " << A2.type() << endl;
+        int ix, iy;
+        for(const auto pMp: pF->GetMapPoints())
+            if(pMp!=NULL){
+                auto mpt = pMp->GetWorldPos();
+                auto a = cv::Mat(mpt);
+                cv::Mat b = A1 * a;
+                float height = b.at<float>(0);
+                if (height < -0.1){
+                    int x = to_gridmap_index(b.at<float>(1));
+                    int y = to_gridmap_index(b.at<float>(2));
+                    if (0<=y<gridmap.cols && 0<=x<gridmap.rows)
+                        temp.at<float>(y, x) = temp.at<float>(y, x) * (1.0f - alpha) - alpha;
+//                    for(ix=x-1; (ix<=x+1) ;ix++)
+//                        for(iy=y-1; (iy<=y+1) ;iy++)
+//                            if (0<=iy<gridmap.cols && 0<=ix<gridmap.rows)
+//                                temp.at<float>(iy, ix) = temp.at<float>(iy, ix) * (1.0f - alpha) - alpha;
+                }
+            }
 
         int j, cnt, j2;
         int update_size = cntBoundaryUpdateSizes.size();
         for(int i=previous_update_size_index; i < update_size; i++){
             auto a_view = cv::Mat(mvViewPoints[i]);
             cv::Mat b_view = A1 * a_view;
-            int x_view = to_gridmap_index(b_view.at<float>(1));
-            int y_view = to_gridmap_index(b_view.at<float>(2));
+//            int x_view = to_gridmap_index(b_view.at<float>(1));
+//            int y_view = to_gridmap_index(b_view.at<float>(2));
 
             cnt = cntBoundaryUpdateSizes[i];
 
@@ -339,12 +349,11 @@ namespace ORB_SLAM2{
                 cv::Mat b = A1 * a;
                 int x = to_gridmap_index(b.at<float>(1));
                 int y = to_gridmap_index(b.at<float>(2));
-                cv::Point pt(x, y);
-                polygon.push_back(pt);
-//                if (j > previous_cnt)
-//                    if (!mvIsImageBoundary[i][j2] && !mvIsImageBoundary[i][j2-1] && is_obstacle(pt, pt_prev, x_view, y_view))
-//                        cv::line(temp, pt, pt_prev, -1.0, 2);
-                pt_prev = pt;
+                if (0<=x<gridmap.cols && 0<=y<gridmap.rows){
+                    cv::Point pt(x, y);
+                    polygon.push_back(pt);
+                    pt_prev = pt;
+                }
                 j2 += 1;
             }
             std::vector<std::vector<cv::Point>> polygons;
@@ -362,21 +371,27 @@ namespace ORB_SLAM2{
 //        cntBoundaryUpdateSizes.clear();
     }
 
-    void MapPlane::projectMapPointsOnGridMap(const Frame &pF){
+    void MapPlane::projectMapPointsOnGridMap(KeyFrame *pF){
+        unique_lock<mutex> lock(mMutexGridMap);
+        unique_lock<mutex> lock2(mpMap->mMutexGridmapping);
         auto coef = GetWorldPos();
         auto A1 = projector_matrix(coef, i0, i1);
         int ix, iy;
-        for(auto pMp: pF.mvpMapPoints)
+        for(const auto pMp: pF->GetMapPoints())
             if(pMp!=NULL){
-                auto a = cv::Mat(pMp->GetWorldPos());
+                auto mpt = pMp->GetWorldPos();
+                auto a = cv::Mat(mpt);
                 cv::Mat b = A1 * a;
-                float height = b.at<float>(0);
+                float height = - b.at<float>(0);
                 if (height > 0.2){
                     int x = to_gridmap_index(b.at<float>(1));
                     int y = to_gridmap_index(b.at<float>(2));
+//                    if (0<=y<=gridmap.cols && 0<=x<=gridmap.rows)
+//                        gridmap.at<float>(x, y) = gridmap.at<float>(x, y) * (1 - alpha) - alpha;
                     for(ix=x-1; (ix<=x+1) ;ix++)
                         for(iy=y-1; (iy<=y+1) ;iy++)
-                            gridmap.at<float>(ix, iy) = gridmap.at<float>(ix, iy) * (1 - alpha) - alpha;
+                            if (0<=iy<=gridmap.cols && 0<=ix<=gridmap.rows)
+                                gridmap.at<float>(ix, iy) = gridmap.at<float>(ix, iy) * (1 - alpha) - alpha;
                 }
             }
     }

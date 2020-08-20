@@ -117,14 +117,12 @@ public:
     cv::Mat UnprojectStereo(const int &i);
 
     //Plane functions
-    void ComputePlanesFromPointCloud(const cv::Mat &imDepth);
     void ComputePlanesFromOrganizedPointCloud(const cv::Mat &imDepth, capewrap* cape);
     void GeneratePlanesFromBoundries(const cv::Mat &imDepth);
     void CaculatePlanes(const cv::Mat& inputplane,
                         const cv::Mat& inputline, const PointT &pt, const PointT &pt1);
     bool PlaneNotSeen(const cv::Mat& coef);
     bool LineInRange(PointT Pc);
-    bool IsBorderLine(PointT pc, PointT pc1, const cv::Mat &imDepth);
     bool IsBorderPoint(PointT pc, const cv::Mat &imDepth);
     cv::Mat ComputePlaneWorldCoeff(const int &idx);
     cv::Mat ComputeNotSeenPlaneWorldCoeff(const int &idx);

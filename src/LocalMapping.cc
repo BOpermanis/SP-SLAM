@@ -779,6 +779,7 @@ void LocalMapping::MaintainMapPlanes(){
     unique_lock<mutex> lock(mMutexReset);
     unique_lock<mutex> lock2(mMutexIdFloor);
 
+
     // finding floor plane
     if(mpCurrentKeyFrame != NULL){
         auto pos = mpCurrentKeyFrame->GetPose();
@@ -799,8 +800,11 @@ void LocalMapping::MaintainMapPlanes(){
 
     if(id_floor != -1)
         for(auto &plane: mpMap->GetAllMapPlanes())
-            if (plane->mnId == id_floor)
-                plane->polygonToGrid();
+            if (plane->mnId == id_floor){
+//                plane->projectMapPointsOnGridMap(mpCurrentKeyFrame);
+                plane->polygonToGrid(mpCurrentKeyFrame);
+            }
+
 }
 
 } //namespace ORB_SLAM

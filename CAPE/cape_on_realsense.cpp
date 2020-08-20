@@ -229,7 +229,8 @@ int main()
             }
         }
 
-        imshow( "Display window",  mask);
+//        imshow( "Display window",  mask);
+        imshow( "Display window",  seg_rz);
 
         // Press  ESC on keyboard to  exit
         char c = (char) cv::waitKey(1);

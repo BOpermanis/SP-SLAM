@@ -38,7 +38,7 @@ namespace ORB_SLAM2 {
         void AddNotSeenObservation(KeyFrame* pKF, int idx);
         void AddParObservation(KeyFrame* pKF, int idx);
         void AddVerObservation(KeyFrame* pKF, int idx);
-        void projectMapPointsOnGridMap(const Frame &pF);
+        void projectMapPointsOnGridMap(KeyFrame* pF);
 
         void EraseObservation(KeyFrame* pKF);
         void EraseParObservation(KeyFrame* pKF);
@@ -57,7 +57,7 @@ namespace ORB_SLAM2 {
         bool isBad();
         void Replace(MapPlane* pMP);
         KeyFrame* GetReferenceKeyFrame();
-        void polygonToGrid();
+        void polygonToGrid(KeyFrame *pF);
 
     public:
         long unsigned int mnId; ///< Global ID for MapPlane;

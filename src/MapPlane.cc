@@ -224,6 +224,7 @@ namespace ORB_SLAM2{
         cntBoundaryUpdateSizes.push_back(pF.mvBoundaryPoints[id].size());
         mvIsImageBoundary.push_back(pF.mvIsImageBoundary);
         Transformation(pF.mvBoundaryPoints[id], mvBoundaryPoints, pF.mTcw.inv());
+        projectMapPointsOnGridMap(pF);
     }
 
     bool MapPlane::IsInKeyFrame(KeyFrame *pKF)
@@ -319,7 +320,6 @@ namespace ORB_SLAM2{
 //        cout << A1.size() << " " << A1.type() << endl;
 //        cout << A2.size() << " " << A2.type() << endl;
 
-        float alpha = 0.1;
         int j, cnt, j2;
         int update_size = cntBoundaryUpdateSizes.size();
         for(int i=previous_update_size_index; i < update_size; i++){
@@ -341,9 +341,9 @@ namespace ORB_SLAM2{
                 int y = to_gridmap_index(b.at<float>(2));
                 cv::Point pt(x, y);
                 polygon.push_back(pt);
-                if (j > previous_cnt)
-                    if (!mvIsImageBoundary[i][j2] && !mvIsImageBoundary[i][j2-1] && is_obstacle(pt, pt_prev, x_view, y_view))
-                        cv::line(temp, pt, pt_prev, -1.0, 2);
+//                if (j > previous_cnt)
+//                    if (!mvIsImageBoundary[i][j2] && !mvIsImageBoundary[i][j2-1] && is_obstacle(pt, pt_prev, x_view, y_view))
+//                        cv::line(temp, pt, pt_prev, -1.0, 2);
                 pt_prev = pt;
                 j2 += 1;
             }
@@ -361,6 +361,26 @@ namespace ORB_SLAM2{
 //        mvBoundaryPoints.clear();
 //        cntBoundaryUpdateSizes.clear();
     }
+
+    void MapPlane::projectMapPointsOnGridMap(const Frame &pF){
+        auto coef = GetWorldPos();
+        auto A1 = projector_matrix(coef, i0, i1);
+        int ix, iy;
+        for(auto pMp: pF.mvpMapPoints)
+            if(pMp!=NULL){
+                auto a = cv::Mat(pMp->GetWorldPos());
+                cv::Mat b = A1 * a;
+                float height = b.at<float>(0);
+                if (height > 0.2){
+                    int x = to_gridmap_index(b.at<float>(1));
+                    int y = to_gridmap_index(b.at<float>(2));
+                    for(ix=x-1; (ix<=x+1) ;ix++)
+                        for(iy=y-1; (iy<=y+1) ;iy++)
+                            gridmap.at<float>(ix, iy) = gridmap.at<float>(ix, iy) * (1 - alpha) - alpha;
+                }
+            }
+    }
+
     cv::Mat MapPlane::GetGridMap(){
         unique_lock<mutex> lock(mMutexGridMap);
         return gridmap.clone();

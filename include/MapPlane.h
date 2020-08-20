@@ -38,6 +38,7 @@ namespace ORB_SLAM2 {
         void AddNotSeenObservation(KeyFrame* pKF, int idx);
         void AddParObservation(KeyFrame* pKF, int idx);
         void AddVerObservation(KeyFrame* pKF, int idx);
+        void projectMapPointsOnGridMap(const Frame &pF);
 
         void EraseObservation(KeyFrame* pKF);
         void EraseParObservation(KeyFrame* pKF);
@@ -80,6 +81,7 @@ namespace ORB_SLAM2 {
         cv::Mat mask = cv::Mat::zeros(cv::Size(300, 300), CV_8U);;
         int previous_cnt = 0;
         int previous_update_size_index = 0;
+        float alpha = 0.1;
 
         std::vector<std::vector<bool>> mvIsImageBoundary;
         std::vector<cv::Vec3f> mvViewPoints;

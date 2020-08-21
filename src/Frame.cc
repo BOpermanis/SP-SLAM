@@ -183,22 +183,24 @@ Frame::Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const double &timeSt
     AssignFeaturesToGrid();
 
 //    ComputePlanesFromPointCloud(imDepth);
-    std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
+//    std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
 
     ComputePlanesFromOrganizedPointCloud(imDepth, cape);
 //    mnRealPlaneNum = mvPlanePoints.size();
     mnRealPlaneNum = mvBoundaryPoints.size();
 //    ORB_SLAM2::Timer::AddPlane(mnRealPlaneNum);
 
-    std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
-    double tt= std::chrono::duration_cast<std::chrono::duration<double> >(t2 - t1).count();
+//    std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
+//    double tt= std::chrono::duration_cast<std::chrono::duration<double> >(t2 - t1).count();
 //    ORB_SLAM2::Timer::SetTPlane(tt);
 
     // TODO generate suposed planes
 //    GeneratePlanesFromBoundries(imDepth);
-    std::chrono::steady_clock::time_point t3 = std::chrono::steady_clock::now();
-    double tt2= std::chrono::duration_cast<std::chrono::duration<double> >(t3 - t2).count();
+//    std::chrono::steady_clock::time_point t3 = std::chrono::steady_clock::now();
+//    double tt2= std::chrono::duration_cast<std::chrono::duration<double> >(t3 - t2).count();
 //    ORB_SLAM2::Timer::SetTSPlane(tt2);
+
+    ComputeLines(imGray, imDepth, cape);
 
 //    mnPlaneNum = mvPlanePoints.size();
     mnPlaneNum = mvBoundaryPoints.size();
@@ -766,7 +768,6 @@ cv::Mat Frame::UnprojectStereo(const int &i)
 
     void Frame::ComputePlanesFromOrganizedPointCloud(const cv::Mat &imDepth, capewrap* cape){
         auto capeout = cape->process(imDepth);
-        int margin = 50;
 
         int num_planes = 0;
         int i_plane;
@@ -1010,4 +1011,80 @@ cv::Mat Frame::UnprojectStereo(const int &i)
         cv::transpose(mTcw, temp);
         return temp*mvNotSeenPlaneCoefficients[idx];
     }
+
+    void Frame::ComputeLines(const cv::Mat &imGray, const cv::Mat &imDepth, capewrap* cape){
+        cv::Mat edges;
+        std::vector<cv::Vec4i> lines;
+        cv::Canny(imGray, edges, 50, 200, 3);
+        cv::HoughLinesP(edges, lines, 1, CV_PI/180, 150, 100, 10 );
+//        cv::HoughLines(edges, lines, 1, CV_PI/180, 150, 100, 10 );
+
+        int d = 5;
+        int ix, iy;
+        float d1, d2, mad1, mad2;
+        std::vector<float> vec1, vec2;
+
+        for(auto &line: lines){
+            int x1 = line[0];
+            int y1 = line[1];
+            int x2 = line[2];
+            int y2 = line[3];
+
+            if (x1 < margin or x1 > imDepth.cols - margin or y1 < margin or y1 > imDepth.rows - margin) continue;
+            if (x2 < margin or x2 > imDepth.cols - margin or y2 < margin or y2 > imDepth.rows - margin) continue;
+
+            vec1.clear();
+            vec2.clear();
+
+            d1 = 0; d2 = 0;
+            mad1 = 0; mad2 = 0;
+
+            for (ix=x1-d;ix<=x1+d;ix++){
+                for (iy=y1-d;iy<=y1+d;iy++){
+                    if (imDepth.at<float>(ix, iy) > 0) {
+                        vec1.push_back(imDepth.at<float>(ix, iy));
+//                        d1 += imDepth.at<float>(ix, iy);
+//                        cnt1 += 1;
+                    }
+                }
+            }
+
+            for (ix=x2-d;ix<=x2+d;ix++){
+                for (iy=y2-d;iy<=y2+d;iy++){
+                    if (imDepth.at<float>(ix, iy) > 0){
+                        vec2.push_back(imDepth.at<float>(ix, iy));
+//                        d2 += imDepth.at<float>(ix, iy);
+//                        cnt2 += 1;
+                    }
+                }
+            }
+
+            if (vec1.size() < 5 || vec2.size() < 5) continue;
+
+            for(auto v: vec1) d1 += v;
+            for(auto v: vec2) d2 += v;
+
+            d1 /= float(vec1.size());
+            d2 /= float(vec2.size());
+
+            for(auto v: vec1) mad1 += abs(d1 - v);
+            for(auto v: vec2) mad2 += abs(d2 - v);
+
+            mad1 /= float(vec1.size());
+            mad2 /= float(vec2.size());
+
+            if (mad1 > 0.1 || mad2 > 0.1) continue;
+
+            mvLines.emplace_back(
+                    (float(x1) - cape->cx_ir) / cape->fx_ir,
+                    (float(y1) - cape->cy_ir) / cape->fy_ir,
+                    d1,
+                    (float(x2) - cape->cx_ir) / cape->fx_ir,
+                    (float(y2) - cape->cy_ir) / cape->fy_ir,
+                    d2);
+        }
+
+    }
+
+
 } //namespace ORB_SLAM

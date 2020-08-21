@@ -127,6 +127,8 @@ public:
     cv::Mat ComputePlaneWorldCoeff(const int &idx);
     cv::Mat ComputeNotSeenPlaneWorldCoeff(const int &idx);
 
+    void ComputeLines(const cv::Mat &imGray, const cv::Mat &imDepth, capewrap* cape);
+    int margin = 50;
 //    void GenerateBoundaryPoints(int i);
 public:
     // Vocabulary used for relocalization.
@@ -239,6 +241,8 @@ public:
     std::vector<bool> mvbNotSeenPlaneOutlier;
     std::vector<bool> mvbParPlaneOutlier;
     std::vector<bool> mvbVerPlaneOutlier;
+    std::vector<cv::Vec6f> mvLines;
+
     int mnPlaneNum;
     int mnRealPlaneNum;
     int mnNotSeenPlaneNum;

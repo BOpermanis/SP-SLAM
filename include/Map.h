@@ -24,8 +24,10 @@
 #include "MapPoint.h"
 #include "KeyFrame.h"
 #include "MapPlane.h"
+#include "MapLine.h"
 #include <set>
-
+#include <string>
+#include <map>
 #include <mutex>
 //#include <pcl/common/transforms.h>
 //#include <pcl/point_types.h>
@@ -38,6 +40,7 @@ namespace ORB_SLAM2
 {
 
 class MapPoint;
+class MapLine;
 class KeyFrame;
 class MapPlane;
 class Frame;
@@ -49,7 +52,7 @@ public:
 //    typedef pcl::PointCloud <PointT> PointCloud;
     typedef cv::Vec3f PointT;
     typedef std::vector<PointT> PointCloud;
-    Map(const string &strSettingPath);
+    Map(const std::string &strSettingPath);
 
     void AddKeyFrame(KeyFrame* pKF);
     void AddMapPoint(MapPoint* pMP);
@@ -67,10 +70,14 @@ public:
     void InformNewBigChange();
     int GetLastBigChangeIdx();
 
+    void AddMapLine(MapLine* pMP);
+    void EraseMapLine(MapLine* pMP);
+    void SetReferenceMapLines(const std::vector<MapLine*> &vpMPs);
+
 
     void AssociatePlanesByBoundary(Frame &pF, bool out = false);
-    void SearchMatchedPlanes(KeyFrame* pKF, cv::Mat Scw, const vector<MapPlane*> &vpPlanes,
-                             vector<MapPlane*> &vpMatched,vector<MapPlane*> &vpMatchedPar,vector<MapPlane*> &vpMatchedVer,
+    void SearchMatchedPlanes(KeyFrame* pKF, cv::Mat Scw, const std::vector<MapPlane*> &vpPlanes,
+                             std::vector<MapPlane*> &vpMatched,std::vector<MapPlane*> &vpMatchedPar,std::vector<MapPlane*> &vpMatchedVer,
                              bool out = false);
 
     double PointDistanceFromPlane(const cv::Mat& plane, const PointCloud &boundry, bool out = false);
@@ -80,8 +87,13 @@ public:
     std::vector<MapPoint*> GetReferenceMapPoints();
     std::vector<long unsigned int> GetRemovedPlanes();
 
+    std::vector<MapLine*> GetAllMapLines();
+    std::vector<MapLine*> GetReferenceMapLines();
+
+
     long unsigned int MapPointsInMap();
     long unsigned int MapPlanesInMap();
+    long unsigned int MapLinesInMap();
     long unsigned int NotSeenMapPlanesInMap();
     long unsigned  KeyFramesInMap();
 
@@ -89,7 +101,7 @@ public:
 
     void clear();
 
-    vector<KeyFrame*> mvpKeyFrameOrigins;
+    std::vector<KeyFrame*> mvpKeyFrameOrigins;
 
     std::mutex mMutexMapUpdate;
     std::mutex mMutexGridmapping;
@@ -100,6 +112,9 @@ public:
 protected:
     std::set<MapPoint*> mspMapPoints;
     std::set<KeyFrame*> mspKeyFrames;
+
+    std::set<MapLine*> mspMapLines;
+    std::vector<MapLine*> mvpReferenceMapLines;
 
     std::set<MapPlane*> mspNotSeenMapPlanes;
     std::set<MapPlane*> mspMapPlanes;

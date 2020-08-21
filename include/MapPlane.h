@@ -44,10 +44,10 @@ namespace ORB_SLAM2 {
         void EraseParObservation(KeyFrame* pKF);
         void EraseVerObservation(KeyFrame* pKF);
         void EraseNotSeenObservation(KeyFrame* pKF);
-        map<KeyFrame*, int> GetObservations();
-        map<KeyFrame*, int> GetNotSeenObservations();
-        map<KeyFrame*, int> GetParObservations();
-        map<KeyFrame*, int> GetVerObservations();
+        std::map<KeyFrame*, int> GetObservations();
+        std::map<KeyFrame*, int> GetNotSeenObservations();
+        std::map<KeyFrame*, int> GetParObservations();
+        std::map<KeyFrame*, int> GetVerObservations();
 
         cv::Mat GetGridMap();
         int GetIndexInKeyFrame(KeyFrame *pKF);

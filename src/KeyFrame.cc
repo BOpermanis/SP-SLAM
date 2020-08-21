@@ -725,4 +725,86 @@ void KeyFrame::EraseNotSeenMapPlaneMatch(ORB_SLAM2::MapPlane *pMP) {
         mvpNotSeenMapPlanes[idx]=static_cast<MapPlane*>(NULL);
 }
 
+
+    void KeyFrame::AddMapLine(MapLine *pML, const size_t &idx)
+    {
+        unique_lock<mutex> lock(mMutexFeatures);
+        mvpMapLines[idx]=pML;
+    }
+
+    void KeyFrame::EraseMapLineMatch(const size_t &idx)
+    {
+        unique_lock<mutex> lock(mMutexFeatures);
+        mvpMapLines[idx]=static_cast<MapLine*>(NULL);
+    }
+
+    void KeyFrame::EraseMapLineMatch(MapLine* pML)
+    {
+        int idx = pML->GetIndexInKeyFrame(this);
+        if(idx>=0)
+            mvpMapLines[idx]=static_cast<MapLine*>(NULL);
+    }
+
+
+    void KeyFrame::ReplaceMapLineMatch(const size_t &idx, MapLine* pML)
+    {
+        mvpMapLines[idx]=pML;
+    }
+
+    set<MapLine*> KeyFrame::GetMapLines()
+    {
+        unique_lock<mutex> lock(mMutexFeatures);
+        set<MapLine*> s;
+        for(size_t i=0, iend=mvpMapLines.size(); i<iend; i++)
+        {
+            if(!mvpMapLines[i])
+                continue;
+            MapLine* pML = mvpMapLines[i];
+            if(!pML->isBad())
+                s.insert(pML);
+        }
+        return s;
+    }
+
+    int KeyFrame::TrackedMapLines(const int &minObs)
+    {
+        unique_lock<mutex> lock(mMutexFeatures);
+
+        int nPoints=0;
+        const bool bCheckObs = minObs>0;
+        for(int i=0; i<N; i++)
+        {
+            MapLine* pML = mvpMapLines[i];
+            if(pML)
+            {
+                if(!pML->isBad())
+                {
+                    if(bCheckObs)
+                    {
+                        if(mvpMapLines[i]->Observations()>=minObs)
+                            nPoints++;
+                    }
+                    else
+                        nPoints++;
+                }
+            }
+        }
+
+        return nPoints;
+    }
+
+    vector<MapLine*> KeyFrame::GetMapLineMatches()
+    {
+        unique_lock<mutex> lock(mMutexFeatures);
+        return mvpMapLines;
+    }
+
+    MapLine* KeyFrame::GetMapLine(const size_t &idx)
+    {
+        unique_lock<mutex> lock(mMutexFeatures);
+        return mvpMapLines[idx];
+    }
+
+
+
 } //namespace ORB_SLAM

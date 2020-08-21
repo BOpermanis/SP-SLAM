@@ -22,6 +22,7 @@
 #define KEYFRAME_H
 
 #include "MapPoint.h"
+#include "MapLine.h"
 #include "Thirdparty/DBoW2/DBoW2/BowVector.h"
 #include "Thirdparty/DBoW2/DBoW2/FeatureVector.h"
 #include "ORBVocabulary.h"
@@ -44,6 +45,7 @@ namespace ORB_SLAM2
 class Map;
 class MapPoint;
 class MapPlane;
+class MapLine;
 class Frame;
 class KeyFrameDatabase;
 
@@ -102,6 +104,19 @@ public:
     std::vector<MapPlane*> GetMapPlaneMatches();
     int TrackedMapPoints(const int &minObs);
     MapPoint* GetMapPoint(const size_t &idx);
+
+
+    // MapLine observation functions
+    void AddMapLine(MapLine* pMP, const size_t &idx);
+    void EraseMapLineMatch(const size_t &idx);
+    void EraseMapLineMatch(MapLine* pML);
+    void ReplaceMapLineMatch(const size_t &idx, MapLine* pML);
+
+    std::set<MapLine*> GetMapLines();
+    std::vector<MapLine*> GetMapLineMatches();
+    int TrackedMapLines(const int &minObs);
+    MapLine* GetMapLine(const size_t &idx);
+
 
     // KeyPoint functions
     std::vector<size_t> GetFeaturesInArea(const float &x, const float  &y, const float  &r) const;
@@ -240,6 +255,7 @@ protected:
 
     // MapPoints associated to keypoints
     std::vector<MapPoint*> mvpMapPoints;
+    std::vector<MapLine*> mvpMapLines;
 
     // BoW
     KeyFrameDatabase* mpKeyFrameDB;

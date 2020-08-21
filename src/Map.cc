@@ -51,6 +51,12 @@ void Map::AddMapPoint(MapPoint *pMP)
     mspMapPoints.insert(pMP);
 }
 
+    void Map::AddMapLine(MapLine *pML)
+    {
+        unique_lock<mutex> lock(mMutexMap);
+        mspMapLines.insert(pML);
+    }
+
 void Map::AddMapPlane(MapPlane *pMP) {
     unique_lock<mutex> lock(mMutexMap);
     mspMapPlanes.insert(pMP);
@@ -74,6 +80,15 @@ void Map::EraseMapPoint(MapPoint *pMP)
     // TODO: This only erase the pointer.
     // Delete the MapPoint
 }
+
+    void Map::EraseMapLine(MapLine *pML)
+    {
+        unique_lock<mutex> lock(mMutexMap);
+        mspMapLines.erase(pML);
+
+        // TODO: This only erase the pointer.
+        // Delete the MapPoint
+    }
 
 void Map::EraseMapPlane(MapPlane *pMP)
 {
@@ -100,6 +115,12 @@ void Map::SetReferenceMapPoints(const vector<MapPoint *> &vpMPs)
     mvpReferenceMapPoints = vpMPs;
 }
 
+    void Map::SetReferenceMapLines(const vector<MapLine *> &vpMLs)
+    {
+        unique_lock<mutex> lock(mMutexMap);
+        mvpReferenceMapLines = vpMLs;
+    }
+
 void Map::InformNewBigChange()
 {
     unique_lock<mutex> lock(mMutexMap);
@@ -124,6 +145,12 @@ vector<MapPoint*> Map::GetAllMapPoints()
     return vector<MapPoint*>(mspMapPoints.begin(),mspMapPoints.end());
 }
 
+    vector<MapLine*> Map::GetAllMapLines()
+    {
+        unique_lock<mutex> lock(mMutexMap);
+        return vector<MapLine*>(mspMapLines.begin(),mspMapLines.end());
+    }
+
 vector<MapPlane*> Map::GetAllMapPlanes() {
     unique_lock<mutex> lock(mMutexMap);
     return vector<MapPlane*>(mspMapPlanes.begin(),mspMapPlanes.end());;
@@ -139,6 +166,12 @@ long unsigned int Map::MapPointsInMap()
     unique_lock<mutex> lock(mMutexMap);
     return mspMapPoints.size();
 }
+
+    long unsigned int Map::MapLinesInMap()
+    {
+        unique_lock<mutex> lock(mMutexMap);
+        return mspMapLines.size();
+    }
 
 long unsigned int Map::MapPlanesInMap() {
     unique_lock<mutex> lock(mMutexMap);
@@ -162,6 +195,12 @@ vector<MapPoint*> Map::GetReferenceMapPoints()
     return mvpReferenceMapPoints;
 }
 
+    vector<MapLine*> Map::GetReferenceMapLines()
+    {
+        unique_lock<mutex> lock(mMutexMap);
+        return mvpReferenceMapLines;
+    }
+
 vector<long unsigned int> Map::GetRemovedPlanes()
 {
     unique_lock<mutex> lock(mMutexMap);
@@ -179,6 +218,9 @@ void Map::clear()
     for(set<MapPoint*>::iterator sit=mspMapPoints.begin(), send=mspMapPoints.end(); sit!=send; sit++)
         delete *sit;
 
+    for(set<MapLine*>::iterator sit=mspMapLines.begin(), send=mspMapLines.end(); sit!=send; sit++)
+        delete *sit;
+
     for(set<KeyFrame*>::iterator sit=mspKeyFrames.begin(), send=mspKeyFrames.end(); sit!=send; sit++)
         delete *sit;
 
@@ -186,11 +228,13 @@ void Map::clear()
     for(set<MapPlane*>::iterator sit=mspMapPlanes.begin(), send=mspMapPlanes.end(); sit!=send; sit++)
         delete *sit;
 
+    mspMapLines.clear();
     mspMapPoints.clear();
     mspKeyFrames.clear();
     mspMapPlanes.clear();
     mnMaxKFid = 0;
     mvpReferenceMapPoints.clear();
+    mvpReferenceMapLines.clear();
     mvpKeyFrameOrigins.clear();
     mvnRemovedPlanes.clear();
 }

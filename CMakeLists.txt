@@ -166,6 +166,5 @@ target_link_libraries(cape_on_realsense
         /librealsense/build/librealsense2.so
         ${OpenCV_LIBS})
 
-add_executable(gridmap_experiment Examples/gridmap_example.cpp)
-target_link_libraries(gridmap_experiment
-        /SP-SLAM/grid_map_core/lib/libgrid_map_core.so ${OpenCV_LIBS})
+add_executable(hough_transform_on_realsense Examples/hough_transform_on_realsense.cpp)
+target_link_libraries(hough_transform_on_realsense ${OpenCV_LIBS} /librealsense/build/librealsense2.so)

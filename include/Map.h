@@ -76,6 +76,7 @@ public:
 
 
     void AssociatePlanesByBoundary(Frame &pF, bool out = false);
+    void AssociateLines(Frame &pF);
     void SearchMatchedPlanes(KeyFrame* pKF, cv::Mat Scw, const std::vector<MapPlane*> &vpPlanes,
                              std::vector<MapPlane*> &vpMatched,std::vector<MapPlane*> &vpMatchedPar,std::vector<MapPlane*> &vpMatchedVer,
                              bool out = false);

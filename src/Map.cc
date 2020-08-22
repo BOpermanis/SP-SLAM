@@ -239,13 +239,21 @@ void Map::clear()
     mvnRemovedPlanes.clear();
 }
 
+    void Map::AssociateLines(ORB_SLAM2::Frame &pF) {
+        for (int i = 0; i < pF.mvLines.size(); ++i) {
+            cv::Mat pM = pF.ComputeLineWorldCoeff(i);
+            for(auto sit=mspMapLines.begin(), send=mspMapLines.end(); sit!=send; sit++){
+                cv::Mat pW = (*sit)->GetWorldPos();
+
+            }
+        }
+    }
+
     void Map::AssociatePlanesByBoundary(ORB_SLAM2::Frame &pF, bool out) {
 //        out = true;
         unique_lock<mutex> lock(mMutexMap);
         pF.mbNewPlane = false;
 
-        if(out)
-            cout << "Plane associate in map  ID :  " << pF.mnId << "   num of Plane: "  << pF.mnPlaneNum << " TH: " << mfDisTh << endl;
         int num_associated = 0;
         float sum_dis = 0.0;
         int num_total = 0;
@@ -253,20 +261,17 @@ void Map::clear()
         for (int i = 0; i < pF.mnPlaneNum; ++i) {
 
             cv::Mat pM = pF.ComputePlaneWorldCoeff(i);
-            if(out)
-                cout << " plane  " << i << " : " << endl;
+
             float ldTh = mfDisTh;
             float lverTh = mfVerTh;
             float lparTh = mfParTh;
-            for(set<MapPlane*>::iterator sit=mspMapPlanes.begin(), send=mspMapPlanes.end(); sit!=send; sit++){
+            for(auto sit=mspMapPlanes.begin(), send=mspMapPlanes.end(); sit!=send; sit++){
                 cv::Mat pW = (*sit)->GetWorldPos();
 
                 float angle = pM.at<float>(0, 0) * pW.at<float>(0, 0) +
                               pM.at<float>(1, 0) * pW.at<float>(1, 0) +
                               pM.at<float>(2, 0) * pW.at<float>(2, 0);
 
-                if(out)
-                    cout  << ":  angle : " << angle << endl;
                 num_total += 1;
                 if ((angle > mfAngleTh || angle < -mfAngleTh)) // associate plane
                 {
@@ -276,9 +281,7 @@ void Map::clear()
                     if(dis < ldTh) {
 
                         ldTh = dis;
-                        if (out) {
-                            cout << "  associate!" << endl;
-                        }
+
                         pF.mvpMapPlanes[i] = static_cast<MapPlane*>(nullptr);
                         pF.mvpMapPlanes[i] = (*sit);
                         continue;
@@ -288,8 +291,6 @@ void Map::clear()
                 // vertical planes
                 if (angle < lverTh && angle > -lverTh) {
 
-                    if(out)
-                        cout << "  vertical!" << endl;
                     lverTh = abs(angle);
                     pF.mvpVerticalPlanes[i] = static_cast<MapPlane*>(nullptr);
                     pF.mvpVerticalPlanes[i] = (*sit);
@@ -298,8 +299,7 @@ void Map::clear()
 
                 //parallel planes
                 if ((angle > lparTh || angle < -lparTh)) {
-                    if(out)
-                        cout << "  parallel!" << endl;
+
                     lparTh = abs(angle);
                     pF.mvpParallelPlanes[i] = static_cast<MapPlane*>(nullptr);
                     pF.mvpParallelPlanes[i] = (*sit);
@@ -326,23 +326,19 @@ void Map::clear()
                         double dis = PointDistanceFromPlane(pM, (*it)->mvBoundaryPoints, out);
                         if(dis < ldTh) {
                             ldTh = dis;
-                            if (out)
-                                cout << "  associate!" << endl;
                             pF.mvpMapPlanes[i] = static_cast<MapPlane*>(nullptr);
                             pF.mvpMapPlanes[i] = (*it);
                         }
                     }
                 }
             }
-            if(out)
-                cout << endl;
         }
 
 
         for (int i = 0; i < pF.mnNotSeenPlaneNum; ++i) {
             cv::Mat pM = pF.ComputeNotSeenPlaneWorldCoeff(i);
             float ldTh = mfDisTh;
-            for(set<MapPlane*>::iterator sit=mspMapPlanes.begin(), send=mspMapPlanes.end(); sit!=send; sit++){
+            for(auto sit=mspMapPlanes.begin(), send=mspMapPlanes.end(); sit!=send; sit++){
                 cv::Mat pW = (*sit)->GetWorldPos();
 
                 float angle = pM.at<float>(0, 0) * pW.at<float>(0, 0) +
@@ -354,8 +350,7 @@ void Map::clear()
                     double dis = PointDistanceFromPlane(pM, (*sit)->mvBoundaryPoints, out);
                     if (dis < ldTh) {
                         ldTh = dis;
-                        if (out)
-                            cout << "  associate!" << endl;
+
                         pF.mvpNotSeenMapPlanes[i] = static_cast<MapPlane *>(nullptr);
                         pF.mvpNotSeenMapPlanes[i] = (*sit);
                     }
@@ -379,8 +374,7 @@ void Map::clear()
                         double dis = PointDistanceFromPlane(pM, (*it)->mvBoundaryPoints, out);
                         if(dis < ldTh) {
                             ldTh = dis;
-                            if (out)
-                                cout << "  associate!" << endl;
+
                             pF.mvpNotSeenMapPlanes[i] = static_cast<MapPlane*>(nullptr);
                             pF.mvpNotSeenMapPlanes[i] = (*it);
                         }
@@ -403,8 +397,7 @@ void Map::clear()
 
     double Map::PointDistanceFromPlane(const cv::Mat &plane, const PointCloud &boundry, bool out) {
     double res = 100;
-    if(out)
-        cout << " compute dis: " << endl;
+
     for(auto &p : boundry){
         double dis = abs(plane.at<float>(0, 0) * p[0] +
                    plane.at<float>(1, 0) * p[1] +
@@ -413,8 +406,7 @@ void Map::clear()
         if(dis < res)
             res = dis;
     }
-    if(out)
-        cout << endl << "ave : " << res << endl;
+
     return res;
 }
 

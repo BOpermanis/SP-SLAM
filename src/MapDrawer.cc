@@ -193,7 +193,6 @@ void MapDrawer::DrawKeyFrames(const bool bDrawKF, const bool bDrawGraph)
 
     const vector<KeyFrame*> vpKFs = mpMap->GetAllKeyFrames();
 
-
     if(bDrawKF)
     {
         for(size_t i=0; i<vpKFs.size(); i++)

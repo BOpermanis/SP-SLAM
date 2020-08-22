@@ -58,7 +58,7 @@ public:
 
     static cv::Mat toMat24(cv::Vec3f a, cv::Vec3f b);
     static cv::Mat toMat24(cv::Vec6f a);
-    static cv::Mat transformMat24(cv::Mat4f T, cv::Mat x);
+    static cv::Mat transformMat24(cv::Mat T, cv::Mat x);
 
 };
 

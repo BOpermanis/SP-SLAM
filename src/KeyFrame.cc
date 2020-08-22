@@ -729,7 +729,11 @@ void KeyFrame::EraseNotSeenMapPlaneMatch(ORB_SLAM2::MapPlane *pMP) {
     void KeyFrame::AddMapLine(MapLine *pML, const size_t &idx)
     {
         unique_lock<mutex> lock(mMutexFeatures);
-        mvpMapLines[idx]=pML;
+        if(idx+1 > mvpMapLines.size()){
+            mvpMapLines.push_back(pML);
+        }else{
+            mvpMapLines[idx] = pML;
+        }
     }
 
     void KeyFrame::EraseMapLineMatch(const size_t &idx)

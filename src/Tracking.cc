@@ -583,10 +583,9 @@ void Tracking::StereoInitialization()
             pKFini->AddMapPlane(pNewMP, i);
         }
 
-
         for (int i = 0; i < mCurrentFrame.mvLines.size(); ++i) {
             cv::Mat p6D = mCurrentFrame.ComputeLineWorldCoeff(i);
-            MapLine* pNewML = new MapLine(p6D, pKFini, i, mpMap);
+            auto pNewML = new MapLine(p6D, pKFini, i, mpMap);
             mpMap->AddMapLine(pNewML);
             pKFini->AddMapLine(pNewML, i);
         }
@@ -833,6 +832,8 @@ bool Tracking::TrackReferenceKeyFrame()
     mCurrentFrame.SetPose(mLastFrame.mTcw);
 
     mpMap->AssociatePlanesByBoundary(mCurrentFrame);
+
+    mpMap->AssociateLines(mCurrentFrame);
 //    mpMap->AssociatePlanesInFrame(mCurrentFrame);
 
     Optimizer::PoseOptimization(&mCurrentFrame);
@@ -1004,6 +1005,8 @@ bool Tracking::TrackWithMotionModel()
 
     mpMap->AssociatePlanesByBoundary(mCurrentFrame);
 
+    mpMap->AssociateLines(mCurrentFrame);
+
     Optimizer::PoseOptimization(&mCurrentFrame);
 
     // Discard outliers
@@ -1081,6 +1084,8 @@ bool Tracking::TrackLocalMap()
     SearchLocalPoints();
 
    mpMap->AssociatePlanesByBoundary(mCurrentFrame);
+
+    mpMap->AssociateLines(mCurrentFrame);
 
     // Optimize Pose
     Optimizer::PoseOptimization(&mCurrentFrame);
@@ -1315,6 +1320,8 @@ void Tracking::CreateNewKeyFrame()
             mpMap->AddMapPlane(pNewMP);
             pKF->AddMapPlane(pNewMP, i);
         }
+
+        mpMap->AssociateLines(mCurrentFrame);
 
         for (int i = 0; i < mCurrentFrame.mvLines.size(); ++i) {
 

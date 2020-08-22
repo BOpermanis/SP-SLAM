@@ -1008,9 +1008,7 @@ cv::Mat Frame::UnprojectStereo(const int &i)
     }
 
     cv::Mat Frame::ComputeLineWorldCoeff(const int &idx) {
-        cv::Mat temp;
-        cv::transpose(mTcw, temp);
-        return Converter::transformMat24(temp, Converter::toMat24(mvLines[idx]));;
+        return Converter::transformMat24(mTcw, Converter::toMat24(mvLines[idx]));;
     }
 
     cv::Mat Frame::ComputeNotSeenPlaneWorldCoeff(const int &idx) {

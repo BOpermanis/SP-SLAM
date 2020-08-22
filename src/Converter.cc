@@ -180,7 +180,7 @@ cv::Mat Converter::toCvMat(const g2o::Plane3D &plane) {
         return toMat24(cv::Vec3f(a[0], a[1], a[2]), cv::Vec3f(a[3], a[4], a[5]));
     }
 
-    cv::Mat Converter::transformMat24(cv::Mat4f T, cv::Mat x){
+    cv::Mat Converter::transformMat24(cv::Mat T, cv::Mat x){
         cv::Mat y = T * x;
         y.at<cv::Vec4f>(0) /= y.at<float>(0, 3);
         y.at<cv::Vec4f>(1) /= y.at<float>(1, 3);

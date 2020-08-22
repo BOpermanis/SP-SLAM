@@ -431,14 +431,10 @@ void Map::clear()
         vpMatchedPar = vector<MapPlane*>(pKF->mnPlaneNum,static_cast<MapPlane*>(nullptr));
         vpMatchedVer = vector<MapPlane*>(pKF->mnPlaneNum,static_cast<MapPlane*>(nullptr));
 
-        if(out)
-            cout << "Plane associate in map  ID :  " << pKF->mnId << "   num of Plane: "  << pKF->mnPlaneNum << " TH: " << mfDisTh << endl;
-
         for (int i = 0; i < pKF->mnPlaneNum; ++i) {
 
             cv::Mat pM = ScwT * pKF->mvPlaneCoefficients[i];
-            if(out)
-                cout << " plane  " << i << " : " << endl;
+
             float ldTh = mfDisTh;
             float lverTh = mfVerTh;
             float lparTh = mfParTh;
@@ -449,17 +445,12 @@ void Map::clear()
                               pM.at<float>(1, 0) * pW.at<float>(1, 0) +
                               pM.at<float>(2, 0) * pW.at<float>(2, 0);
 
-                if(out)
-                    cout << j << ":  angle : " << angle << endl;
-
                 if ((angle > mfAngleTh || angle < -mfAngleTh)) // associate plane
                 {
 
                     double dis = PointDistanceFromPlane(pM, vpPlanes[j]->mvBoundaryPoints, out);
                     if(dis < ldTh) {
                         ldTh = dis;
-                        if (out)
-                            cout << "  associate!" << endl;
                         vpMatched[i] = static_cast<MapPlane*>(nullptr);
                         vpMatched[i] = vpPlanes[j];
                         continue;
@@ -468,8 +459,6 @@ void Map::clear()
 
                 // vertical planes
                 if (angle < lverTh && angle > -lverTh) {
-                    if(out)
-                        cout << "  vertical!" << endl;
                     lverTh = abs(angle);
                     vpMatchedVer[i] = static_cast<MapPlane*>(nullptr);
                     vpMatchedVer[i] = vpPlanes[j];
@@ -478,14 +467,9 @@ void Map::clear()
 
                 //parallel planes
                 if ((angle > lparTh || angle < -lparTh)) {
-                    if(out)
-                        cout << "  parallel!" << endl;
                     lparTh = abs(angle);
                     vpMatchedPar[i] = static_cast<MapPlane*>(nullptr);
                     vpMatchedPar[i] = vpPlanes[j];
-                }else{
-                    if(out)
-                        cout << endl;
                 }
             }
 

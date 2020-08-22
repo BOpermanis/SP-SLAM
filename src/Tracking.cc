@@ -583,6 +583,14 @@ void Tracking::StereoInitialization()
             pKFini->AddMapPlane(pNewMP, i);
         }
 
+
+        for (int i = 0; i < mCurrentFrame.mvLines.size(); ++i) {
+            cv::Mat p6D = mCurrentFrame.ComputeLineWorldCoeff(i);
+            MapLine* pNewML = new MapLine(p6D, pKFini, i, mpMap);
+            mpMap->AddMapLine(pNewML);
+            pKFini->AddMapLine(pNewML, i);
+        }
+
         for (int i = 0; i < mCurrentFrame.mnNotSeenPlaneNum; ++i) {
             cv::Mat p3D = mCurrentFrame.ComputeNotSeenPlaneWorldCoeff(i);
             MapPlane* pNewMP = new MapPlane(p3D, pKFini, i, mpMap, mCurrentFrame.mvIsImageBoundary, false);
@@ -1306,6 +1314,14 @@ void Tracking::CreateNewKeyFrame()
             MapPlane* pNewMP = new MapPlane(p3D, pKF, i, mpMap, mCurrentFrame.mvIsImageBoundary);
             mpMap->AddMapPlane(pNewMP);
             pKF->AddMapPlane(pNewMP, i);
+        }
+
+        for (int i = 0; i < mCurrentFrame.mvLines.size(); ++i) {
+
+            cv::Mat p6D = mCurrentFrame.ComputeLineWorldCoeff(i);
+            MapLine* pNewML = new MapLine(p6D, pKF, i, mpMap);
+            mpMap->AddMapLine(pNewML);
+            pKF->AddMapLine(pNewML, i);
         }
 
         for (int i = 0; i < mCurrentFrame.mnNotSeenPlaneNum; ++i) {

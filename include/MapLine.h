@@ -35,17 +35,15 @@ class KeyFrame;
 class Map;
 class Frame;
 
-
 class MapLine
 {
 public:
-    MapLine(const cv::Mat &Pos, KeyFrame* pRefKF, Map* pMap);
-    MapLine(const cv::Mat &Pos,  Map* pMap, Frame* pFrame, const int &idxF);
+    MapLine(const cv::Mat &Pos, KeyFrame* pRefKF, int idx, Map* pMap);
 
     void SetWorldPos(const cv::Mat &Pos);
     cv::Mat GetWorldPos();
 
-    cv::Mat GetNormal();
+    cv::Vec3f GetNormal();
     KeyFrame* GetReferenceKeyFrame();
 
     std::map<KeyFrame*,size_t> GetObservations();
@@ -117,10 +115,7 @@ protected:
      std::map<KeyFrame*,size_t> mObservations;
 
      // Mean viewing direction
-     cv::Mat mNormalVector;
-
-     // Best descriptor to fast matching
-     cv::Mat mDescriptor;
+     cv::Vec3f mNormalVector;
 
      // Reference KeyFrame
      KeyFrame* mpRefKF;
@@ -131,7 +126,7 @@ protected:
 
      // Bad flag (we do not currently erase MapPoint from memory)
      bool mbBad;
-    MapLine* mpReplaced;
+     MapLine* mpReplaced;
 
      // Scale invariance distances
      float mfMinDistance;

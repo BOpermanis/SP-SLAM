@@ -28,47 +28,49 @@ namespace ORB_SLAM2
 
 long unsigned int MapLine::nNextId=0;
 mutex MapLine::mGlobalMutex;
-
-MapLine::MapLine(const cv::Mat &Pos, KeyFrame *pRefKF, Map* pMap):
+// pos == abi 3d punkti
+MapLine::MapLine(const cv::Mat &Pos, KeyFrame *pRefKF, int idx, Map* pMap):
     mnFirstKFid(pRefKF->mnId), mnFirstFrame(pRefKF->mnFrameId), nObs(0), mnTrackReferenceForFrame(0),
     mnLastFrameSeen(0), mnBALocalForKF(0), mnFuseCandidateForKF(0), mnLoopPointForKF(0), mnCorrectedByKF(0),
     mnCorrectedReference(0), mnBAGlobalForKF(0), mpRefKF(pRefKF), mnVisible(1), mnFound(1), mbBad(false),
     mpReplaced(static_cast<MapLine*>(NULL)), mfMinDistance(0), mfMaxDistance(0), mpMap(pMap)
 {
     Pos.copyTo(mWorldPos);
-    mNormalVector = cv::Mat::zeros(3,1,CV_32F);
 
-    // MapPoints can be created from Tracking and Local Mapping. This mutex avoid conflicts with id.
-    unique_lock<mutex> lock(mpMap->mMutexPointCreation);
-    mnId=nNextId++;
-}
+    cv::Vec3f p1(Pos.at<float>(0, 0), Pos.at<float>(0, 1), Pos.at<float>(0, 2));
+    cv::Vec3f p2(Pos.at<float>(1, 0), Pos.at<float>(1, 1), Pos.at<float>(1, 2));
 
-    MapLine::MapLine(const cv::Mat &Pos, Map* pMap, Frame* pFrame, const int &idxF):
-    mnFirstKFid(-1), mnFirstFrame(pFrame->mnId), nObs(0), mnTrackReferenceForFrame(0), mnLastFrameSeen(0),
-    mnBALocalForKF(0), mnFuseCandidateForKF(0),mnLoopPointForKF(0), mnCorrectedByKF(0),
-    mnCorrectedReference(0), mnBAGlobalForKF(0), mpRefKF(static_cast<KeyFrame*>(NULL)), mnVisible(1),
-    mnFound(1), mbBad(false), mpReplaced(NULL), mpMap(pMap)
-{
+    mNormalVector = p1 - p2;
+    float norm = sqrt(mNormalVector[0] * mNormalVector[0] +  mNormalVector[1] * mNormalVector[1] + mNormalVector[2] * mNormalVector[2]);
+
+    mNormalVector /= norm;
+
     Pos.copyTo(mWorldPos);
-    cv::Mat Ow = pFrame->GetCameraCenter();
-    mNormalVector = mWorldPos - Ow;
-    mNormalVector = mNormalVector/cv::norm(mNormalVector);
 
-    cv::Mat PC = Pos - Ow;
-    const float dist = cv::norm(PC);
-    const int level = pFrame->mvKeysUn[idxF].octave;
-    const float levelScaleFactor =  pFrame->mvScaleFactors[level];
-    const int nLevels = pFrame->mnScaleLevels;
-
-    mfMaxDistance = dist*levelScaleFactor;
-    mfMinDistance = mfMaxDistance/pFrame->mvScaleFactors[nLevels-1];
-
-    pFrame->mDescriptors.row(idxF).copyTo(mDescriptor);
+//    mRed = rand() % 255;
+//    mBlue = rand() % 255;
+//    mGreen = rand() % 255;
+//
+//    auto T = pRefKF->GetPose();
+//    mvViewPoints.emplace_back(T.at<float>(0, 3), T.at<float>(1, 3), T.at<float>(2, 3));
+//    auto T1 = T.inv();
+//    if (s) {
+//        mvIsImageBoundary.push_back(is_image_border);
+//        cntBoundaryUpdateSizes.push_back(pRefKF->mvBoundaryPoints[idx].size());
+//        Transformation(pRefKF->mvBoundaryPoints[idx], mvBoundaryPoints, T1);
+//        AddObservation(pRefKF, idx);
+//    } else {
+//        mvIsImageBoundary.push_back(is_image_border);
+//        cntBoundaryUpdateSizes.push_back(pRefKF->mvNotSeenBoundaryPoints[idx].size());
+//        Transformation(pRefKF->mvNotSeenBoundaryPoints[idx], mvBoundaryPoints, T1);
+//        AddNotSeenObservation(pRefKF, idx);
+//    }
 
     // MapPoints can be created from Tracking and Local Mapping. This mutex avoid conflicts with id.
     unique_lock<mutex> lock(mpMap->mMutexPointCreation);
     mnId=nNextId++;
 }
+
 
 void MapLine::SetWorldPos(const cv::Mat &Pos)
 {
@@ -83,10 +85,10 @@ cv::Mat MapLine::GetWorldPos()
     return mWorldPos.clone();
 }
 
-cv::Mat MapLine::GetNormal()
+cv::Vec3f MapLine::GetNormal()
 {
     unique_lock<mutex> lock(mMutexPos);
-    return mNormalVector.clone();
+    return cv::Vec3f(mNormalVector);
 }
 
 KeyFrame* MapLine::GetReferenceKeyFrame()
@@ -158,7 +160,7 @@ void MapLine::SetBadFlag()
         obs = mObservations;
         mObservations.clear();
     }
-    for(map<KeyFrame*,size_t>::iterator mit=obs.begin(), mend=obs.end(); mit!=mend; mit++)
+    for(auto mit=obs.begin(), mend=obs.end(); mit!=mend; mit++)
     {
         KeyFrame* pKF = mit->first;
         // TODO implement deltetions
@@ -193,7 +195,7 @@ void MapLine::Replace(MapLine* pMP)
         mpReplaced = pMP;
     }
 
-    for(map<KeyFrame*,size_t>::iterator mit=obs.begin(), mend=obs.end(); mit!=mend; mit++)
+    for(auto mit=obs.begin(), mend=obs.end(); mit!=mend; mit++)
     {
         // Replace measurement in keyframe
         KeyFrame* pKF = mit->first;
@@ -255,49 +257,6 @@ bool MapLine::IsInKeyFrame(KeyFrame *pKF)
 {
     unique_lock<mutex> lock(mMutexFeatures);
     return (mObservations.count(pKF));
-}
-
-void MapLine::UpdateNormalAndDepth()
-{
-    map<KeyFrame*,size_t> observations;
-    KeyFrame* pRefKF;
-    cv::Mat Pos;
-    {
-        unique_lock<mutex> lock1(mMutexFeatures);
-        unique_lock<mutex> lock2(mMutexPos);
-        if(mbBad)
-            return;
-        observations=mObservations;
-        pRefKF=mpRefKF;
-        Pos = mWorldPos.clone();
-    }
-
-    if(observations.empty())
-        return;
-
-    cv::Mat normal = cv::Mat::zeros(3,1,CV_32F);
-    int n=0;
-    for(map<KeyFrame*,size_t>::iterator mit=observations.begin(), mend=observations.end(); mit!=mend; mit++)
-    {
-        KeyFrame* pKF = mit->first;
-        cv::Mat Owi = pKF->GetCameraCenter();
-        cv::Mat normali = mWorldPos - Owi;
-        normal = normal + normali/cv::norm(normali);
-        n++;
-    }
-
-    cv::Mat PC = Pos - pRefKF->GetCameraCenter();
-    const float dist = cv::norm(PC);
-    const int level = pRefKF->mvKeysUn[observations[pRefKF]].octave;
-    const float levelScaleFactor =  pRefKF->mvScaleFactors[level];
-    const int nLevels = pRefKF->mnScaleLevels;
-
-    {
-        unique_lock<mutex> lock3(mMutexPos);
-        mfMaxDistance = dist*levelScaleFactor;
-        mfMinDistance = mfMaxDistance/pRefKF->mvScaleFactors[nLevels-1];
-        mNormalVector = normal/n;
-    }
 }
 
 float MapLine::GetMinDistanceInvariance()

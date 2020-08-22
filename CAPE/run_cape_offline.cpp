@@ -116,8 +116,35 @@ void organizePointCloudByCell(Eigen::MatrixXf & cloud_in, Eigen::MatrixXf & clou
     }
 }
 
-int main(int argc, char ** argv){
 
+cv::Mat toMat24(cv::Vec3f a, cv::Vec3f b){
+    auto x = cv::Mat(cv::Size(2, 4), CV_32F);
+    x.at<cv::Vec4f>(0) = cv::Vec4f(a[0], a[1], a[2], 1.0);
+    x.at<cv::Vec4f>(1) = cv::Vec4f(b[0], b[1], b[2], 1.0);
+    return x;
+}
+
+cv::Mat toMat24(cv::Vec6f a) {
+    return toMat24(cv::Vec3f(a[0], a[1], a[2]), cv::Vec3f(a[3], a[4], a[5]));
+}
+
+int main(int argc, char ** argv){
+    auto a = cv::Mat(cv::Size(2, 4), CV_32F);
+    a.at<cv::Vec4f>(0) = cv::Vec4f(0, 0.2, 0, 1.0);
+    a.at<cv::Vec4f>(1) = cv::Vec4f(1, 0.2, 0, 1.0);
+
+    cv::Mat b = cv::Mat::eye(cv::Size(4, 4), CV_32F);
+
+    cv::Mat c = b * a;
+
+//    cout << a.size() << endl;
+//    cout << a.at<float>(0, 1) << endl;
+    cout << c.size() << endl;
+    cout << c << endl;
+    cout << a << endl;
+
+    cout << (c.size() == cv::Size(2, 4)) << endl;
+    return 0;
     string sequence;
     int PATCH_SIZE;
     if (argc>1){

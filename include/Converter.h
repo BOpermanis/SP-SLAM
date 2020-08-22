@@ -54,6 +54,12 @@ public:
     static std::vector<float> toQuaternion(const cv::Mat &M);
     static g2o::Plane3D toPlane3D(const cv::Mat &coe);
     static cv::Mat toCvMat(const g2o::Plane3D &plane);
+
+
+    static cv::Mat toMat24(cv::Vec3f a, cv::Vec3f b);
+    static cv::Mat toMat24(cv::Vec6f a);
+    static cv::Mat transformMat24(cv::Mat4f T, cv::Mat x);
+
 };
 
 }// namespace ORB_SLAM

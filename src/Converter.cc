@@ -169,6 +169,21 @@ cv::Mat Converter::toCvMat(const g2o::Plane3D &plane) {
     return cvMat.clone();
 }
 
+    cv::Mat Converter::toMat24(cv::Vec3f a, cv::Vec3f b){
+        auto x = cv::Mat(cv::Size(2, 4), CV_32F);
+        x.at<cv::Vec4f>(0) = cv::Vec4f(a[0], a[1], a[2], 1.0);
+        x.at<cv::Vec4f>(1) = cv::Vec4f(b[0], b[1], b[2], 1.0);
+        return x;
+    }
 
+    cv::Mat Converter::toMat24(cv::Vec6f a) {
+        return toMat24(cv::Vec3f(a[0], a[1], a[2]), cv::Vec3f(a[3], a[4], a[5]));
+    }
 
+    cv::Mat Converter::transformMat24(cv::Mat4f T, cv::Mat x){
+        cv::Mat y = T * x;
+        y.at<cv::Vec4f>(0) /= y.at<float>(0, 3);
+        y.at<cv::Vec4f>(1) /= y.at<float>(1, 3);
+        return y;
+    }
 } //namespace ORB_SLAM

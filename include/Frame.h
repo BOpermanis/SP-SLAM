@@ -125,6 +125,7 @@ public:
     bool LineInRange(PointT Pc);
     bool IsBorderPoint(PointT pc, const cv::Mat &imDepth);
     cv::Mat ComputePlaneWorldCoeff(const int &idx);
+    cv::Mat ComputeLineWorldCoeff(const int &idx);
     cv::Mat ComputeNotSeenPlaneWorldCoeff(const int &idx);
 
     void ComputeLines(const cv::Mat &imGray, const cv::Mat &imDepth, capewrap* cape);

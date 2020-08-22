@@ -22,6 +22,7 @@
 #include "Converter.h"
 #include "ORBmatcher.h"
 #include "capewrap.cpp"
+#include "Converter.h"
 
 #include <thread>
 //#include <Timer.h>
@@ -1004,6 +1005,12 @@ cv::Mat Frame::UnprojectStereo(const int &i)
         auto c0 = mvPlaneCoefficients[idx];
         cv::Mat c = temp*c0;
         return c;
+    }
+
+    cv::Mat Frame::ComputeLineWorldCoeff(const int &idx) {
+        cv::Mat temp;
+        cv::transpose(mTcw, temp);
+        return Converter::transformMat24(temp, Converter::toMat24(mvLines[idx]));;
     }
 
     cv::Mat Frame::ComputeNotSeenPlaneWorldCoeff(const int &idx) {

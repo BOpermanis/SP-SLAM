@@ -699,7 +699,6 @@ void Frame::ComputeStereoFromRGBD(const cv::Mat &imDepth)
 {
     mvuRight = vector<float>(N,-1);
     mvDepth = vector<float>(N,-1);
-
     for(int i=0; i<N; i++)
     {
         const cv::KeyPoint &kp = mvKeys[i];
@@ -1008,16 +1007,21 @@ cv::Mat Frame::UnprojectStereo(const int &i)
     }
 
     cv::Mat Frame::ComputeLineWorldCoeff(const int &idx) {
-        return Converter::transformMat24(mTcw, Converter::toMat24(mvLines[idx]));;
+//        cv::Mat temp = cv::Mat::eye(cv::Size(4, 4), CV_32F);
+//        cv::transpose(mTcw, temp);
+//        return Converter::transformMat24(mTcw, Converter::toMat24(mvLines[idx]));;
+        return Converter::transformMat24(mTcw, mvLines[idx]);;
     }
 
     cv::Mat Frame::ComputeNotSeenPlaneWorldCoeff(const int &idx) {
         cv::Mat temp;
         cv::transpose(mTcw, temp);
         return temp*mvNotSeenPlaneCoefficients[idx];
+//        return mvNotSeenPlaneCoefficients[idx];
     }
 
     void Frame::ComputeLines(const cv::Mat &imGray, const cv::Mat &imDepth, capewrap* cape){
+
         cv::Mat edges;
         std::vector<cv::Vec4i> lines;
         cv::Canny(imGray, edges, 50, 200, 3);
@@ -1044,25 +1048,15 @@ cv::Mat Frame::UnprojectStereo(const int &i)
             d1 = 0; d2 = 0;
             mad1 = 0; mad2 = 0;
 
-            for (ix=x1-d;ix<=x1+d;ix++){
-                for (iy=y1-d;iy<=y1+d;iy++){
-                    if (imDepth.at<float>(ix, iy) > 0) {
+            for (ix=x1-d;ix<=x1+d;ix++)
+                for (iy=y1-d;iy<=y1+d;iy++)
+                    if (imDepth.at<float>(ix, iy) > 0)
                         vec1.push_back(imDepth.at<float>(ix, iy));
-//                        d1 += imDepth.at<float>(ix, iy);
-//                        cnt1 += 1;
-                    }
-                }
-            }
 
-            for (ix=x2-d;ix<=x2+d;ix++){
-                for (iy=y2-d;iy<=y2+d;iy++){
-                    if (imDepth.at<float>(ix, iy) > 0){
+            for (ix=x2-d;ix<=x2+d;ix++)
+                for (iy=y2-d;iy<=y2+d;iy++)
+                    if (imDepth.at<float>(ix, iy) > 0)
                         vec2.push_back(imDepth.at<float>(ix, iy));
-//                        d2 += imDepth.at<float>(ix, iy);
-//                        cnt2 += 1;
-                    }
-                }
-            }
 
             if (vec1.size() < 5 || vec2.size() < 5) continue;
 
@@ -1072,6 +1066,8 @@ cv::Mat Frame::UnprojectStereo(const int &i)
             d1 /= float(vec1.size());
             d2 /= float(vec2.size());
 
+            if (d1 < 0.000001 || d2 < 0.000001) continue;
+
             for(auto v: vec1) mad1 += abs(d1 - v);
             for(auto v: vec2) mad2 += abs(d2 - v);
 
@@ -1079,14 +1075,23 @@ cv::Mat Frame::UnprojectStereo(const int &i)
             mad2 /= float(vec2.size());
 
             if (mad1 > 0.1 || mad2 > 0.1) continue;
+            cout << d1 << " " << d2 << endl;
 
-            mvLines.emplace_back(
-                    (float(x1) - cape->cx_ir) / cape->fx_ir,
-                    (float(y1) - cape->cy_ir) / cape->fy_ir,
-                    d1,
-                    (float(x2) - cape->cx_ir) / cape->fx_ir,
-                    (float(y2) - cape->cy_ir) / cape->fy_ir,
-                    d2);
+            cv::Mat v1_ = (cv::Mat_<float>(3,1) <<
+                    d1 * (float(x1) - cape->cx_ir) / cape->fx_ir,
+                    d1 * (float(y1) - cape->cy_ir) / cape->fy_ir, d1);
+//             cv::Mat v1_ = mRwc*v1+mOw;
+
+            cv::Mat v2_ = (cv::Mat_<float>(3,1) <<
+                    d2 * (float(x2) - cape->cx_ir) / cape->fx_ir,
+                    d2 * (float(y2) - cape->cy_ir) / cape->fy_ir, d2);
+//            cv::Mat v2_ = mRwc*v2+mOw;
+
+            auto x = cv::Mat(cv::Size(2, 4), CV_32F);
+            x.at<cv::Vec4f>(0) = cv::Vec4f(v1_.at<float>(0), v1_.at<float>(1), v1_.at<float>(2), 1.0);
+            x.at<cv::Vec4f>(1) = cv::Vec4f(v2_.at<float>(0), v2_.at<float>(1), v2_.at<float>(2), 1.0);
+
+            mvLines.push_back(x);
         }
 
     }

@@ -244,7 +244,7 @@ void Map::clear()
             cv::Mat pM = pF.ComputeLineWorldCoeff(i);
             for(auto sit=mspMapLines.begin(), send=mspMapLines.end(); sit!=send; sit++){
                 cv::Mat pW = (*sit)->GetWorldPos();
-
+                // TODO
             }
         }
     }

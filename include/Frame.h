@@ -242,7 +242,7 @@ public:
     std::vector<bool> mvbNotSeenPlaneOutlier;
     std::vector<bool> mvbParPlaneOutlier;
     std::vector<bool> mvbVerPlaneOutlier;
-    std::vector<cv::Vec6f> mvLines;
+    std::vector<cv::Mat> mvLines;
 
     int mnPlaneNum;
     int mnRealPlaneNum;

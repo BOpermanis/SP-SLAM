@@ -28,7 +28,7 @@ namespace ORB_SLAM2
 
 long unsigned int MapLine::nNextId=0;
 mutex MapLine::mGlobalMutex;
-// pos == abi 3d punkti
+// pos == abi 3d punkti homogeenajaas koordinaataas
 MapLine::MapLine(const cv::Mat &Pos, KeyFrame *pRefKF, int idx, Map* pMap):
     mnFirstKFid(pRefKF->mnId), mnFirstFrame(pRefKF->mnFrameId), nObs(0), mnTrackReferenceForFrame(0),
     mnLastFrameSeen(0), mnBALocalForKF(0), mnFuseCandidateForKF(0), mnLoopPointForKF(0), mnCorrectedByKF(0),
@@ -37,15 +37,6 @@ MapLine::MapLine(const cv::Mat &Pos, KeyFrame *pRefKF, int idx, Map* pMap):
 {
     Pos.copyTo(mWorldPos);
 
-    cv::Vec3f p1(Pos.at<float>(0, 0), Pos.at<float>(0, 1), Pos.at<float>(0, 2));
-    cv::Vec3f p2(Pos.at<float>(1, 0), Pos.at<float>(1, 1), Pos.at<float>(1, 2));
-
-    mNormalVector = p1 - p2;
-    float norm = sqrt(mNormalVector[0] * mNormalVector[0] +  mNormalVector[1] * mNormalVector[1] + mNormalVector[2] * mNormalVector[2]);
-
-    mNormalVector /= norm;
-
-    Pos.copyTo(mWorldPos);
 
 //    mRed = rand() % 255;
 //    mBlue = rand() % 255;

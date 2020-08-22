@@ -193,6 +193,19 @@ void MapDrawer::DrawKeyFrames(const bool bDrawKF, const bool bDrawGraph)
 
     const vector<KeyFrame*> vpKFs = mpMap->GetAllKeyFrames();
 
+
+    for(auto &line : mpMap->GetAllMapLines()){
+        auto poz = line->GetWorldPos();
+        glColor3f(0.0f,0.1f,0.0f);
+        glBegin(GL_LINES);
+        float v1 = poz.at<float>(0, 3);
+        float v2 = poz.at<float>(1, 3);
+        glVertex3f(poz.at<float>(0, 0) / v1,poz.at<float>(0, 1) / v1,poz.at<float>(0, 2) / v1);
+        glVertex3f(poz.at<float>(1, 0) / v2,poz.at<float>(1, 1) / v2,poz.at<float>(1, 2) / v2);
+//        cout << poz.at<float>(0, 3) << " " << poz.at<float>(1, 3) << endl;
+        glEnd();
+    }
+
     if(bDrawKF)
     {
         for(size_t i=0; i<vpKFs.size(); i++)

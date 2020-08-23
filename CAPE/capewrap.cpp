@@ -220,8 +220,78 @@ public:
         plane_detector = new CAPE(height, width, PATCH_SIZE, PATCH_SIZE, cylinder_detection, COS_ANGLE_MAX, MAX_MERGE_DIST);
     }
 
-    cape_output process(const cv::Mat &imD) {
+    static float norm(const cv::Vec3f &x){
+        return sqrt(x[0] * x[0] + x[1] * x[1] + x[2] * x[2]);
+    }
+
+    void extract_lines(const Eigen::MatrixXf &cloud, const cv::Mat &imD, const cv::Mat &imGray, std::vector<cv::Mat> &lines){
+        int margin = 50;
+        cv::Mat edges;
+        std::vector<cv::Vec4i> line_vecs;
+        cv::Canny(imGray, edges, 50, 200, 3);
+        cv::HoughLinesP(edges, line_vecs, 1, CV_PI/180, 150, 100, 10 );
+        int d = 5;
+        int ix, iy, i_cloud;
+        float mad1, mad2;
+        cv::Vec3f d1, d2;
+        std::vector<cv::Vec3f> vec1, vec2;
+
+        for(auto &line: line_vecs){
+            int x1 = line[0];
+            int y1 = line[1];
+            int x2 = line[2];
+            int y2 = line[3];
+
+            if (x1 < margin or x1 > imGray.cols - margin or y1 < margin or y1 > imGray.rows - margin) continue;
+            if (x2 < margin or x2 > imGray.cols - margin or y2 < margin or y2 > imGray.rows - margin) continue;
+
+            vec1.clear();
+            vec2.clear();
+            d1 = cv::Vec3f(0, 0, 0); d2 = cv::Vec3f(0, 0, 0);
+            mad1 = 0; mad2 = 0;
+
+            for (ix=x1-d;ix<=x1+d;ix++)
+                for (iy=y1-d;iy<=y1+d;iy++)
+                    if (imGray.at<float>(ix, iy) > 0){
+                        i_cloud = iy * width + ix;
+                        vec1.emplace_back(cloud_array(i_cloud, 0), cloud_array(i_cloud, 1), cloud_array(i_cloud, 2));
+                    }
+
+
+            for (ix=x2-d;ix<=x2+d;ix++)
+                for (iy=y2-d;iy<=y2+d;iy++)
+                    if (imGray.at<float>(ix, iy) > 0){
+                        i_cloud = iy * width + ix;
+                        vec2.emplace_back(cloud_array(i_cloud, 0), cloud_array(i_cloud, 1), cloud_array(i_cloud, 2));
+                    }
+
+            if (vec1.size() < 5 || vec2.size() < 5) continue;
+
+            for(auto &v: vec1) d1 += v;
+            for(auto &v: vec2) d2 += v;
+            d1 /= float(vec1.size());
+            d2 /= float(vec2.size());
+
+            for(const auto &v: vec1) mad1 += norm(d1 - v);
+            for(const auto &v: vec2) mad2 += norm(d2 - v);
+
+            mad1 /= float(vec1.size());
+            mad2 /= float(vec2.size());
+
+            if (mad1 > 0.1 || mad2 > 0.1) continue;
+
+            auto x = cv::Mat(cv::Size(2, 4), CV_32F);
+            x.at<cv::Vec4f>(0) = cv::Vec4f(d1[0], d1[1], d1[2], 1.0);
+            x.at<cv::Vec4f>(1) = cv::Vec4f(d2[0], d2[1], d2[2], 1.0);
+            lines.push_back(x);
+        }
+    }
+
+    cape_output process(const cv::Mat &imD, const cv::Mat &imGray, std::vector<cv::Mat> &lines) {
         d_img = imD.clone();
+
+
+//        cv::HoughLines(edges, lines, 1, CV_PI/180, 150, 100, 10 );
 
         X = X_pre.mul(d_img);
         Y = Y_pre.mul(d_img);
@@ -232,6 +302,9 @@ public:
         d_img = ((float)1.0)*d_img;
 
         projectPointCloud(X_t, Y_t, d_img, U, V, fx_rgb, fy_rgb, cx_rgb, cy_rgb, cloud_array);
+
+        extract_lines(cloud_array, imD, imGray, lines);
+
 
         cv::Mat_<uchar> seg_output = cv::Mat_<uchar>(height, width, uchar(0));
 

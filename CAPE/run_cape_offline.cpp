@@ -235,7 +235,7 @@ int main(int argc, char ** argv){
         cv::Mat_<uchar> seg_output = cv::Mat_<uchar>(height,width,uchar(0));
 
         // Get intrinsics
-        auto output = plane_detector.process(d_img);
+        auto output = plane_detector.process(d_img, rgb_img);
 
         // Map segments with color codes and overlap segmented image w/ RGB
         uchar * sCode;

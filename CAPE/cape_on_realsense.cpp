@@ -155,7 +155,8 @@ int main()
         cv::Mat image_rgb(cv::Size(640, 480), CV_8UC3, (void*)rgb.get_data(), cv::Mat::AUTO_STEP);
         cv::Mat image_depth(cv::Size(640, 480), CV_16UC1, (void*)depth.get_data(), cv::Mat::AUTO_STEP);
         image_depth.convertTo(image_depth, CV_32F);
-        auto plane_extracts = cape.process(image_depth);
+        std::vector<cv::Mat> lines;
+        auto plane_extracts = cape.process(image_depth, image_rgb, lines);
 
 
         std::vector<cv::Vec3b> color_code;

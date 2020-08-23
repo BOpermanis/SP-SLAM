@@ -186,7 +186,7 @@ Frame::Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const double &timeSt
 //    ComputePlanesFromPointCloud(imDepth);
 //    std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
 
-    ComputePlanesFromOrganizedPointCloud(imDepth, cape);
+    ComputePlanesFromOrganizedPointCloud(imDepth, imGray, cape);
 //    mnRealPlaneNum = mvPlanePoints.size();
     mnRealPlaneNum = mvBoundaryPoints.size();
 //    ORB_SLAM2::Timer::AddPlane(mnRealPlaneNum);
@@ -201,7 +201,7 @@ Frame::Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const double &timeSt
 //    double tt2= std::chrono::duration_cast<std::chrono::duration<double> >(t3 - t2).count();
 //    ORB_SLAM2::Timer::SetTSPlane(tt2);
 
-    ComputeLines(imGray, imDepth, cape);
+//    ComputeLines(imGray, imDepth, cape);
 
 //    mnPlaneNum = mvPlanePoints.size();
     mnPlaneNum = mvBoundaryPoints.size();
@@ -766,8 +766,8 @@ cv::Mat Frame::UnprojectStereo(const int &i)
         cv::dilate( src, dilation_dst, element );
     }
 
-    void Frame::ComputePlanesFromOrganizedPointCloud(const cv::Mat &imDepth, capewrap* cape){
-        auto capeout = cape->process(imDepth);
+    void Frame::ComputePlanesFromOrganizedPointCloud(const cv::Mat &imDepth, const cv::Mat &imGray, capewrap* cape){
+        auto capeout = cape->process(imDepth, imGray, mvLines);
 
         int num_planes = 0;
         int i_plane;

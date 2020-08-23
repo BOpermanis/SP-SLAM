@@ -117,7 +117,7 @@ public:
     cv::Mat UnprojectStereo(const int &i);
 
     //Plane functions
-    void ComputePlanesFromOrganizedPointCloud(const cv::Mat &imDepth, capewrap* cape);
+    void ComputePlanesFromOrganizedPointCloud(const cv::Mat &imDepth, const cv::Mat &imGray, capewrap* cape);
     void GeneratePlanesFromBoundries(const cv::Mat &imDepth);
     void CaculatePlanes(const cv::Mat& inputplane,
                         const cv::Mat& inputline, const PointT &pt, const PointT &pt1);
